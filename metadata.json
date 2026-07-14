@@ -1,0 +1,6 @@
+{
+  "name": "Tamil Calendar 2026",
+  "description": "An interactive Tamil daily calendar and monthly almanac featuring astrology, festivals, fasting days, and horoscope calculations with a traditional yellow theme.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
