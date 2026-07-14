@@ -27,8 +27,9 @@ import MonthlyCalendarView from './components/MonthlyCalendarView';
 import AstrologyView from './components/AstrologyView';
 import FestivalsView from './components/FestivalsView';
 import FastingDaysView from './components/FastingDaysView';
-import AdminView from './components/AdminView';
 import { motion, AnimatePresence } from 'motion/react';
+
+const AdminView = React.lazy(() => import('./components/AdminView'));
 
 type AppView = 'dashboard' | 'daily' | 'monthly' | 'astrology' | 'festivals' | 'fasting' | 'admin';
 
@@ -399,7 +400,14 @@ export default function App() {
 
             {activeView === 'admin' && (
               <motion.div key="admin_view" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="h-full flex flex-col overflow-hidden">
-                <AdminView onClose={() => navigateTo('dashboard')} />
+                <React.Suspense fallback={
+                  <div className="h-full flex flex-col items-center justify-center bg-[#FFFDF0] text-[#8A1A1A]">
+                    <div className="w-8 h-8 border-4 border-amber-600 border-t-transparent rounded-full animate-spin mb-2"></div>
+                    <span className="text-xs font-bold font-mono">Loading Admin Module...</span>
+                  </div>
+                }>
+                  <AdminView onClose={() => navigateTo('dashboard')} />
+                </React.Suspense>
               </motion.div>
             )}
           </AnimatePresence>
@@ -825,7 +833,14 @@ export default function App() {
 
                 {activeView === 'admin' && (
                   <motion.div key="desktop_admin" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full">
-                    <AdminView onClose={() => navigateTo('dashboard')} />
+                    <React.Suspense fallback={
+                      <div className="h-full flex flex-col items-center justify-center bg-[#FFFDF0] text-[#8A1A1A]">
+                        <div className="w-8 h-8 border-4 border-amber-600 border-t-transparent rounded-full animate-spin mb-2"></div>
+                        <span className="text-xs font-bold font-mono">Loading Admin Module...</span>
+                      </div>
+                    }>
+                      <AdminView onClose={() => navigateTo('dashboard')} />
+                    </React.Suspense>
                   </motion.div>
                 )}
               </AnimatePresence>
