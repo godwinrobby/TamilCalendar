@@ -9,7 +9,6 @@ import {
   Share2, 
   MoreVertical, 
   Coins, 
-  ShoppingBag, 
   Compass, 
   Sparkles, 
   Award, 
@@ -24,13 +23,12 @@ import {
 import { getTamilCalendarInfo } from './utils/tamilCalendar';
 import DailyCalendarView from './components/DailyCalendarView';
 import MonthlyCalendarView from './components/MonthlyCalendarView';
-import PoojaStoreView from './components/PoojaStoreView';
 import AstrologyView from './components/AstrologyView';
 import FestivalsView from './components/FestivalsView';
 import FastingDaysView from './components/FastingDaysView';
 import { motion, AnimatePresence } from 'motion/react';
 
-type AppView = 'dashboard' | 'daily' | 'monthly' | 'store' | 'astrology' | 'festivals' | 'fasting';
+type AppView = 'dashboard' | 'daily' | 'monthly' | 'astrology' | 'festivals' | 'fasting';
 
 export default function App() {
   const [activeView, setActiveView] = useState<AppView>('dashboard');
@@ -82,7 +80,7 @@ export default function App() {
     <div className="min-h-screen bg-amber-50/20 flex justify-center text-[#5C1A1A] select-none" id="app_root">
       
       {/* Centered Desktop Frame to keep the layout exactly mobile-shaped (as per the image) */}
-      <div className="w-full max-w-md bg-[#FFFDF0] min-h-screen flex flex-col justify-between shadow-2xl relative border-x border-amber-200 overflow-hidden" id="mobile_device_frame">
+      <div className="w-full max-w-md bg-[#FFFDF0] h-screen max-h-screen flex flex-col justify-between shadow-2xl relative border-x border-amber-200 overflow-hidden" id="mobile_device_frame">
         
         <AnimatePresence mode="wait">
           {activeView === 'dashboard' && (
@@ -90,7 +88,7 @@ export default function App() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="flex-grow flex flex-col justify-between pb-16"
+              className="h-full flex flex-col overflow-hidden"
               id="dashboard_view"
             >
               
@@ -149,7 +147,7 @@ export default function App() {
               </div>
 
               {/* 2. MAIN BODY (Tamil Almanac style) */}
-              <div className="px-4 py-3 flex-grow flex flex-col justify-start space-y-4" id="main_dashboard_body">
+              <div className="px-4 py-3 flex-grow overflow-y-auto space-y-4 pb-20 scrollbar-thin" id="main_dashboard_body">
                 
                 {/* Title Banner (நாள்காட்டி) */}
                 <div className="text-center py-1 border-b-2 border-amber-500/30" id="main_banner_title">
@@ -190,38 +188,18 @@ export default function App() {
 
                 </div>
 
-                {/* Split Banner row (Market அங்காடி & Astrology ஜோதிடம்) */}
-                <div className="bg-white border-2 border-[#8A1A1A]/80 rounded-2xl divide-x divide-amber-200 grid grid-cols-2 shadow" id="split_banner_row">
-                  
-                  {/* Left: அங்காடி (Store) */}
-                  <button
-                    onClick={() => setActiveView('store')}
-                    className="p-3.5 flex items-center justify-center space-x-2 hover:bg-amber-50 rounded-l-2xl transition cursor-pointer"
-                    id="btn_to_pooja_store"
-                  >
-                    <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center text-[#8A1A1A] font-extrabold text-sm border border-red-200">
-                      🕉
-                    </div>
-                    <div className="text-left">
-                      <span className="text-xs font-black text-[#8A1A1A] block">அங்காடி</span>
-                      <span className="text-[8px] font-bold text-amber-800 block leading-none">Pooja Market</span>
-                    </div>
-                  </button>
-
-                  {/* Right: ஜோதிடம் (Astrology) */}
-                  <button
-                    onClick={() => setActiveView('astrology')}
-                    className="p-3.5 flex items-center justify-center space-x-2 hover:bg-amber-50 rounded-r-2xl transition cursor-pointer"
-                    id="btn_to_astrology"
-                  >
-                    <Compass className="w-7 h-7 text-[#8A1A1A] animate-spin-slow" />
-                    <div className="text-left">
-                      <span className="text-xs font-black text-[#8A1A1A] block">ஜோதிடம்</span>
-                      <span className="text-[8px] font-bold text-amber-800 block leading-none">Astrology Guide</span>
-                    </div>
-                  </button>
-
-                </div>
+                {/* Full-width Astrology row */}
+                <button
+                  onClick={() => setActiveView('astrology')}
+                  className="w-full bg-white border-2 border-[#8A1A1A]/80 rounded-2xl p-4 flex items-center justify-center space-x-3 shadow hover:bg-amber-50 transition cursor-pointer"
+                  id="btn_to_astrology"
+                >
+                  <Compass className="w-6 h-6 text-[#8A1A1A] animate-spin-slow" />
+                  <div className="text-left">
+                    <span className="text-sm font-black text-[#8A1A1A] block">ஜோதிடம் மற்றும் ஜாதகம்</span>
+                    <span className="text-[10px] font-bold text-amber-800 block leading-none">Daily Astrology Guide & Horoscopes</span>
+                  </div>
+                </button>
 
                 {/* 2-Columns grid (Festivals vs Fasting days) */}
                 <div className="grid grid-cols-2 gap-3" id="bottom_grid_menu">
@@ -310,37 +288,31 @@ export default function App() {
 
           {/* Active Sub-views (Interactive containers loaded on screen when chosen) */}
           {activeView === 'daily' && (
-            <motion.div key="daily_view" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="flex-grow">
+            <motion.div key="daily_view" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="h-full flex flex-col overflow-hidden">
               <DailyCalendarView initialDate={selectedDateStr} onClose={() => setActiveView('dashboard')} />
             </motion.div>
           )}
 
           {activeView === 'monthly' && (
-            <motion.div key="monthly_view" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="flex-grow">
+            <motion.div key="monthly_view" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="h-full flex flex-col overflow-hidden">
               <MonthlyCalendarView onSelectDay={handleSelectDay} onClose={() => setActiveView('dashboard')} />
             </motion.div>
           )}
 
-          {activeView === 'store' && (
-            <motion.div key="store_view" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="flex-grow">
-              <PoojaStoreView onClose={() => setActiveView('dashboard')} />
-            </motion.div>
-          )}
-
           {activeView === 'astrology' && (
-            <motion.div key="astrology_view" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="flex-grow">
+            <motion.div key="astrology_view" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="h-full flex flex-col overflow-hidden">
               <AstrologyView onClose={() => setActiveView('dashboard')} />
             </motion.div>
           )}
 
           {activeView === 'festivals' && (
-            <motion.div key="festivals_view" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="flex-grow">
+            <motion.div key="festivals_view" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="h-full flex flex-col overflow-hidden">
               <FestivalsView onSelectDay={handleSelectDay} onClose={() => setActiveView('dashboard')} />
             </motion.div>
           )}
 
           {activeView === 'fasting' && (
-            <motion.div key="fasting_view" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="flex-grow">
+            <motion.div key="fasting_view" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="h-full flex flex-col overflow-hidden">
               <FastingDaysView onSelectDay={handleSelectDay} onClose={() => setActiveView('dashboard')} />
             </motion.div>
           )}
@@ -349,15 +321,15 @@ export default function App() {
         {/* 3. BOTTOM FIXED NAVIGATION BAR (Persistent shell bottom nav as shown in the original image) */}
         <nav className="absolute bottom-0 left-0 right-0 h-14 bg-[#8A1A1A] border-t-4 border-[#D97706] flex items-center justify-around text-[#FDF6E2] z-30" id="bottom_navbar">
           
-          {/* Nav Item 1: Pooja Store / Market */}
+          {/* Nav Item 1: Astrology Guide */}
           <button 
-            onClick={() => setActiveView('store')}
-            className={`flex flex-col items-center justify-center flex-grow py-1.5 transition cursor-pointer hover:bg-black/10 ${activeView === 'store' ? 'text-amber-300 font-extrabold bg-black/15' : 'opacity-80'}`}
-            title="அங்காடி"
-            id="nav_btn_store"
+            onClick={() => setActiveView('astrology')}
+            className={`flex flex-col items-center justify-center flex-grow py-1.5 transition cursor-pointer hover:bg-black/10 ${activeView === 'astrology' ? 'text-amber-300 font-extrabold bg-black/15' : 'opacity-80'}`}
+            title="ஜோதிடம்"
+            id="nav_btn_astrology"
           >
-            <ShoppingBag className="w-5 h-5" />
-            <span className="text-[9px] block mt-0.5">அங்காடி</span>
+            <Compass className="w-5 h-5" />
+            <span className="text-[9px] block mt-0.5">ஜோதிடம்</span>
           </button>
 
           {/* Nav Item 2: Central Home/Dashboard or Astrology */}

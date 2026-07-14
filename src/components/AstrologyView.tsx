@@ -80,7 +80,7 @@ export default function AstrologyView({ onClose }: AstrologyViewProps) {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#FFFDF0] text-[#5C1A1A] font-sans pb-10" id="astrology_view_container">
+    <div className="h-full flex flex-col overflow-hidden bg-[#FFFDF0] text-[#5C1A1A] font-sans" id="astrology_view_container">
       {/* Top Header */}
       <header className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-[#8A1A1A] text-[#FDF6E2] shadow-md border-b-4 border-[#D97706]" id="astrology_header">
         <button 
@@ -97,6 +97,9 @@ export default function AstrologyView({ onClose }: AstrologyViewProps) {
         </h1>
         <div className="w-10"></div>
       </header>
+
+      {/* Scrollable Body */}
+      <div className="flex-grow overflow-y-auto pb-20 scrollbar-thin flex flex-col" id="astrology_scroll_body">
 
       {/* Sub-tabs Selector (Rasi Palan vs Jathagam Calculator) */}
       <div className="max-w-md w-full mx-auto px-4 mt-4" id="astrology_tabs">
@@ -404,6 +407,7 @@ export default function AstrologyView({ onClose }: AstrologyViewProps) {
 
         </div>
       )}
+      </div> {/* Close astrology_scroll_body */}
     </div>
   );
 }

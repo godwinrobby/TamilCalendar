@@ -72,7 +72,7 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#FFFDF0] text-[#5C1A1A] font-sans pb-10" id="daily_calendar_container">
+    <div className="h-full flex flex-col overflow-hidden bg-[#FFFDF0] text-[#5C1A1A] font-sans" id="daily_calendar_container">
       {/* Top Header */}
       <header className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-[#8A1A1A] text-[#FDF6E2] shadow-md border-b-4 border-[#D97706]" id="daily_header">
         <button 
@@ -91,6 +91,9 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
           <span className="font-mono text-sm font-bold">{engDay}</span>
         </div>
       </header>
+
+      {/* Scrollable Body */}
+      <div className="flex-grow overflow-y-auto pb-20 scrollbar-thin flex flex-col" id="daily_scroll_body">
 
       {/* Date Navigation and Selector Bar */}
       <div className="max-w-md w-full mx-auto px-4 mt-4" id="navigation_controls">
@@ -313,6 +316,7 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
           வாழ்க வளமுடன் • சர்வ மங்கள மாங்கல்யே சிவே சர்வார்த்த சாதிகே
         </p>
       </footer>
+      </div> {/* Close daily_scroll_body */}
     </div>
   );
 }

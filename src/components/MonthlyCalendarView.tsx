@@ -98,7 +98,7 @@ export default function MonthlyCalendarView({ onSelectDay, onClose }: MonthlyCal
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#FFFDF0] text-[#5C1A1A] font-sans pb-10" id="monthly_calendar_container">
+    <div className="h-full flex flex-col overflow-hidden bg-[#FFFDF0] text-[#5C1A1A] font-sans" id="monthly_calendar_container">
       {/* Top Header */}
       <header className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-[#8A1A1A] text-[#FDF6E2] shadow-md border-b-4 border-[#D97706]" id="monthly_header">
         <button 
@@ -115,6 +115,9 @@ export default function MonthlyCalendarView({ onSelectDay, onClose }: MonthlyCal
         </h1>
         <div className="w-10"></div> {/* Spacer */}
       </header>
+
+      {/* Scrollable Body */}
+      <div className="flex-grow overflow-y-auto pb-20 scrollbar-thin flex flex-col" id="monthly_scroll_body">
 
       {/* Month Switching Controls */}
       <div className="max-w-md w-full mx-auto px-4 mt-4" id="month_navigation">
@@ -316,6 +319,7 @@ export default function MonthlyCalendarView({ onSelectDay, onClose }: MonthlyCal
           )}
         </AnimatePresence>
       </div>
+      </div> {/* Close monthly_scroll_body */}
     </div>
   );
 }
