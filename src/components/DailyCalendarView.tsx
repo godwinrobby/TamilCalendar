@@ -77,11 +77,11 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
       <header className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-[#8A1A1A] text-[#FDF6E2] shadow-md border-b-4 border-[#D97706]" id="daily_header">
         <button 
           onClick={onClose} 
-          className="flex items-center space-x-1 px-3 py-1 bg-[#FDF6E2] text-[#8A1A1A] rounded-lg font-medium text-xs md:text-sm hover:bg-amber-100 transition shadow-inner"
+          className="flex items-center justify-center w-9 h-9 bg-[#FCF8E3] text-[#8A1A1A] rounded-full hover:bg-amber-50 transition shadow-sm border border-amber-200/50 active:scale-95 flex-shrink-0"
+          title="முகப்பு (Home)"
           id="btn_back_dashboard"
         >
-          <ChevronLeft className="w-4 h-4" />
-          <span>முகப்பு (Home)</span>
+          <ChevronLeft className="w-5 h-5 flex-shrink-0" />
         </button>
         <h1 className="text-lg md:text-xl font-bold font-display flex items-center space-x-2" id="header_title">
           <Calendar className="w-5 h-5 text-amber-300" />
