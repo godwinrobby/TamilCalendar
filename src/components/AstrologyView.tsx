@@ -102,7 +102,7 @@ export default function AstrologyView({ onClose }: AstrologyViewProps) {
       <div className="flex-grow overflow-y-auto pb-20 scrollbar-thin flex flex-col" id="astrology_scroll_body">
 
       {/* Sub-tabs Selector (Rasi Palan vs Jathagam Calculator) */}
-      <div className="max-w-md w-full mx-auto px-4 mt-4" id="astrology_tabs">
+      <div className="max-w-md md:max-w-2xl lg:max-w-3xl w-full mx-auto px-4 mt-4" id="astrology_tabs">
         <div className="grid grid-cols-2 gap-2 bg-[#FCE5A2]/60 p-1.5 rounded-2xl border-2 border-[#8A1A1A]">
           <button
             onClick={() => setActiveSubTab('rasiPalan')}
@@ -123,7 +123,7 @@ export default function AstrologyView({ onClose }: AstrologyViewProps) {
 
       {/* Rasi Palan Sub-view */}
       {activeSubTab === 'rasiPalan' && (
-        <div className="max-w-md w-full mx-auto px-4 mt-4 space-y-4" id="rasipalan_subview">
+        <div className="max-w-md md:max-w-2xl lg:max-w-3xl w-full mx-auto px-4 mt-4 space-y-4" id="rasipalan_subview">
           
           {/* Scrollable Horizontal Zodiac Signs Selector */}
           <div className="bg-white border border-amber-200 rounded-2xl p-2.5 shadow-sm" id="rasi_scroller_box">
@@ -194,7 +194,7 @@ export default function AstrologyView({ onClose }: AstrologyViewProps) {
 
       {/* Jathagam Calculator Sub-view */}
       {activeSubTab === 'jathagam' && (
-        <div className="max-w-md w-full mx-auto px-4 mt-4" id="jathagam_subview">
+        <div className="max-w-md md:max-w-2xl lg:max-w-3xl w-full mx-auto px-4 mt-4" id="jathagam_subview">
           
           <AnimatePresence mode="wait">
             {!jathagamResult ? (

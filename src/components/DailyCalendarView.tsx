@@ -96,7 +96,7 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
       <div className="flex-grow overflow-y-auto pb-20 scrollbar-thin flex flex-col" id="daily_scroll_body">
 
       {/* Date Navigation and Selector Bar */}
-      <div className="max-w-md w-full mx-auto px-4 mt-4" id="navigation_controls">
+      <div className="max-w-md md:max-w-lg w-full mx-auto px-4 mt-4" id="navigation_controls">
         <div className="flex items-center justify-between bg-amber-100/70 p-2 rounded-2xl border border-amber-200 shadow-sm">
           <button 
             onClick={() => changeDate(-1)} 
@@ -132,7 +132,7 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
       </div>
 
       {/* Interactive Sheet Container */}
-      <div className="w-full max-w-md mx-auto px-4 mt-4 relative overflow-hidden flex-shrink-0" id="sheet_container" style={{ perspective: 1200 }}>
+      <div className="w-full max-w-md md:max-w-lg mx-auto px-4 mt-4 relative overflow-hidden flex-shrink-0" id="sheet_container" style={{ perspective: 1200 }}>
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={selectedDateStr}

@@ -77,10 +77,10 @@ export default function App() {
   const randomQuote = spiritualQuotes[new Date(selectedDateStr).getDate() % spiritualQuotes.length];
 
   return (
-    <div className="min-h-screen bg-amber-50/20 flex justify-center text-[#5C1A1A] select-none" id="app_root">
+    <div className="min-h-screen bg-amber-50/40 md:bg-[#8A1A1A]/5 flex justify-center items-center text-[#5C1A1A] select-none md:p-6" id="app_root">
       
-      {/* Centered Desktop Frame to keep the layout exactly mobile-shaped (as per the image) */}
-      <div className="w-full max-w-md bg-[#FFFDF0] h-screen max-h-screen flex flex-col justify-between shadow-2xl relative border-x border-amber-200 overflow-hidden" id="mobile_device_frame">
+      {/* Responsive Centered App Frame: spacious desktop layout, classic mobile on small screens */}
+      <div className="w-full max-w-md md:max-w-5xl bg-[#FFFDF0] h-screen max-h-screen md:h-[88vh] md:max-h-[800px] flex flex-col justify-between shadow-2xl relative border-x border-amber-200 md:border md:border-amber-900/15 md:rounded-3xl overflow-hidden" id="mobile_device_frame">
         
         <AnimatePresence mode="wait">
           {activeView === 'dashboard' && (
@@ -146,123 +146,169 @@ export default function App() {
                 </div>
               </div>
 
-              {/* 2. MAIN BODY (Tamil Almanac style) */}
-              <div className="px-4 py-3 flex-grow overflow-y-auto space-y-4 pb-20 scrollbar-thin" id="main_dashboard_body">
+              {/* 2. MAIN BODY (Tamil Almanac style) - Clean Responsive Layout */}
+              <div className="px-4 py-3 flex-grow overflow-y-auto pb-20 scrollbar-thin" id="main_dashboard_body">
                 
-                {/* Title Banner (நாள்காட்டி) */}
-                <div className="text-center py-1 border-b-2 border-amber-500/30" id="main_banner_title">
-                  <h2 className="text-xl font-black font-display text-[#8A1A1A] tracking-wider">நாள்காட்டி & நாட்குறிப்பு</h2>
-                </div>
-
-                {/* 2-Columns grid (Daily Sheet vs Monthly Grid) */}
-                <div className="grid grid-cols-2 gap-3" id="top_grid_menu">
+                {/* Desktop Split Layout */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start md:py-4 max-w-4xl mx-auto" id="dashboard_responsive_layout">
                   
-                  {/* Option 1: Daily Sheet Calendar */}
-                  <button
-                    onClick={() => setActiveView('daily')}
-                    className="bg-[#8A1A1A] text-[#FDF6E2] p-5 rounded-2xl shadow-lg border-2 border-amber-400/50 flex flex-col items-center justify-center text-center transition hover:bg-[#9C2020] hover:scale-[1.02] active:scale-95 cursor-pointer h-36 relative overflow-hidden group"
-                    id="btn_to_daily_sheet"
-                  >
-                    <Calendar className="w-8 h-8 text-amber-300 mb-2 group-hover:rotate-12 transition-transform" />
-                    <span className="text-sm font-black font-display tracking-tight">நாள்காட்டி</span>
-                    <span className="text-[10px] opacity-75 mt-1 block">Daily Sheet</span>
+                  {/* Left Column: Calendar Header Info & Decorative block on Desktop (5 cols) */}
+                  <div className="hidden md:flex md:col-span-5 flex-col space-y-4" id="desktop_left_panel">
                     
-                    {/* Tiny calendar sheet graphic overlay inside */}
-                    <span className="absolute bottom-2 right-3 font-mono font-black text-2xl text-white/5 group-hover:text-white/10 transition-colors">31</span>
-                  </button>
-
-                  {/* Option 2: Monthly Grid Calendar */}
-                  <button
-                    onClick={() => setActiveView('monthly')}
-                    className="bg-[#8A1A1A] text-[#FDF6E2] p-5 rounded-2xl shadow-lg border-2 border-amber-400/50 flex flex-col items-center justify-center text-center transition hover:bg-[#9C2020] hover:scale-[1.02] active:scale-95 cursor-pointer h-36 relative overflow-hidden group"
-                    id="btn_to_monthly_grid"
-                  >
-                    <div className="grid grid-cols-3 gap-0.5 w-7 h-7 mb-2 group-hover:scale-110 transition-transform text-amber-300">
-                      {[...Array(9)].map((_, i) => (
-                        <div key={i} className="bg-amber-300 w-1.5 h-1.5 rounded-sm" />
-                      ))}
-                    </div>
-                    <span className="text-sm font-black font-display tracking-tight">மாதகாட்டி</span>
-                    <span className="text-[10px] opacity-75 mt-1 block">Monthly Calendar</span>
-                  </button>
-
-                </div>
-
-                {/* Full-width Astrology row */}
-                <button
-                  onClick={() => setActiveView('astrology')}
-                  className="w-full bg-white border-2 border-[#8A1A1A]/80 rounded-2xl p-4 flex items-center justify-center space-x-3 shadow hover:bg-amber-50 transition cursor-pointer"
-                  id="btn_to_astrology"
-                >
-                  <Compass className="w-6 h-6 text-[#8A1A1A] animate-spin-slow" />
-                  <div className="text-left">
-                    <span className="text-sm font-black text-[#8A1A1A] block">ஜோதிடம் மற்றும் ஜாதகம்</span>
-                    <span className="text-[10px] font-bold text-amber-800 block leading-none">Daily Astrology Guide & Horoscopes</span>
-                  </div>
-                </button>
-
-                {/* 2-Columns grid (Festivals vs Fasting days) */}
-                <div className="grid grid-cols-2 gap-3" id="bottom_grid_menu">
-                  
-                  {/* Option 3: Festivals list */}
-                  <button
-                    onClick={() => setActiveView('festivals')}
-                    className="bg-[#8A1A1A] text-[#FDF6E2] p-5 rounded-2xl shadow-lg border-2 border-amber-400/50 flex flex-col items-center justify-center text-center transition hover:bg-[#9C2020] hover:scale-[1.02] active:scale-95 cursor-pointer h-36 relative overflow-hidden group"
-                    id="btn_to_festivals"
-                  >
-                    <Sparkles className="w-8 h-8 text-amber-300 mb-2 group-hover:rotate-45 transition-transform" />
-                    <span className="text-xs md:text-sm font-black font-display tracking-tight leading-tight">பண்டிகை, விடுமுறைகள்</span>
-                    <span className="text-[9px] opacity-75 mt-1 block">Festivals / Holidays</span>
-                  </button>
-
-                  {/* Option 4: Fasting schedule */}
-                  <button
-                    onClick={() => setActiveView('fasting')}
-                    className="bg-[#8A1A1A] text-[#FDF6E2] p-5 rounded-2xl shadow-lg border-2 border-amber-400/50 flex flex-col items-center justify-center text-center transition hover:bg-[#9C2020] hover:scale-[1.02] active:scale-95 cursor-pointer h-36 relative overflow-hidden group"
-                    id="btn_to_fasting"
-                  >
-                    <Award className="w-8 h-8 text-amber-300 mb-2 group-hover:scale-110 transition-transform" />
-                    <span className="text-xs md:text-sm font-black font-display tracking-tight leading-tight">முக்கிய விரத நாட்கள்</span>
-                    <span className="text-[9px] opacity-75 mt-1 block">Fasting Schedule</span>
-                  </button>
-
-                </div>
-
-                {/* Full-width Banner: ஓம் ஆஸ்ட்ரோ (Jathagam Horoscope starting at ₹30) */}
-                <button
-                  onClick={() => {
-                    setSelectedDateStr('2026-07-13');
-                    setActiveView('astrology');
-                    triggerToast('ஜாதகம் கணிக்கும் பக்கத்திற்கு செல்கிறது...');
-                  }}
-                  className="w-full bg-[#8A1A1A] text-[#FDF6E2] border-2 border-amber-400 rounded-2xl shadow-lg p-4 flex items-center justify-between hover:bg-[#9C2020] hover:scale-[1.01] active:scale-95 transition relative overflow-hidden group cursor-pointer"
-                  id="btn_jathagam_consultation"
-                >
-                  <div className="flex items-center space-x-3 z-10">
-                    {/* Glowing lamp/diya container */}
-                    <div className="w-11 h-11 bg-white/15 rounded-full flex items-center justify-center border border-amber-300/40 relative">
-                      <div className="absolute inset-0 bg-amber-400/20 rounded-full animate-ping" />
-                      <Flame className="w-6 h-6 text-amber-300 fill-amber-200 animate-pulse" />
+                    {/* Premium Date Card */}
+                    <div className="bg-[#FCF8E3] border-4 border-[#8A1A1A] rounded-2xl p-6 text-center shadow-md relative flex flex-col justify-center items-center h-44 border-b-8" id="desktop_date_card">
+                      {/* Torn Sheet Pattern */}
+                      <div className="absolute top-0 left-0 right-0 h-3 bg-[#8A1A1A] flex justify-around items-end overflow-hidden">
+                        {[...Array(8)].map((_, i) => (
+                          <div key={i} className="w-3.5 h-3.5 bg-[#FFFDF0] rounded-full -mb-2 shadow-inner"></div>
+                        ))}
+                      </div>
+                      <span className="text-6xl font-black font-mono text-[#8A1A1A] tracking-tighter mt-1">
+                        {new Date(selectedDateStr).getDate().toString().padStart(2, '0')}
+                      </span>
+                      <span className="text-sm font-extrabold text-amber-950 mt-1">{headerDateInfo.dayOfWeek}</span>
+                      <span className="text-xs font-bold text-[#8A1A1A] opacity-90 mt-0.5">{headerDateInfo.tamilMonth} • {headerDateInfo.tamilYear}</span>
                     </div>
 
-                    <div className="text-left leading-tight">
-                      <h4 className="text-xs md:text-sm font-black text-amber-200">ஓம் ஆஸ்ட்ரோ (Om Astro)</h4>
-                      <p className="text-[9px] md:text-xs text-amber-100/90 font-medium mt-0.5">
-                        கணினி ஜாதகம் கணித்தல் - வெறும் ₹30 முதல்
+                    {/* Spiritual Quote Block */}
+                    <div className="bg-[#FCF8E3]/60 border border-dashed border-amber-300 rounded-2xl p-4 text-center shadow-inner relative flex-grow flex flex-col justify-center min-h-[110px]" id="desktop_quote_panel">
+                      <span className="text-[9px] uppercase font-bold tracking-widest text-amber-800 block mb-1">இன்றைய பொன்மொழி (Spiritual Quote)</span>
+                      <p className="text-xs font-bold text-[#8A1A1A] italic leading-relaxed px-1">
+                        "{randomQuote}"
                       </p>
                     </div>
+
+                    {/* Desktop Om Astro banner */}
+                    <button
+                      onClick={() => {
+                        setSelectedDateStr('2026-07-13');
+                        setActiveView('astrology');
+                        triggerToast('ஜாதகம் கணிக்கும் பக்கத்திற்கு செல்கிறது...');
+                      }}
+                      className="w-full bg-[#8A1A1A] text-[#FDF6E2] border-2 border-amber-400 rounded-2xl shadow-lg p-3.5 flex items-center justify-between hover:bg-[#9C2020] hover:scale-[1.01] active:scale-95 transition relative overflow-hidden group cursor-pointer text-left"
+                      id="btn_jathagam_consultation_desktop"
+                    >
+                      <div className="flex items-center space-x-3 z-10">
+                        <div className="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center border border-amber-300/30">
+                          <Flame className="w-5 h-5 text-amber-300 fill-amber-200 animate-pulse" />
+                        </div>
+                        <div className="leading-tight">
+                          <h4 className="text-xs font-black text-amber-200">ஓம் ஆஸ்ட்ரோ</h4>
+                          <p className="text-[10px] text-amber-100/95 font-medium mt-0.5">ஜாதகம் கணித்தல் - ₹30 முதல்</p>
+                        </div>
+                      </div>
+                      <span className="bg-amber-400 text-[#8A1A1A] font-black text-[10px] rounded-xl px-2.5 py-1 shadow border border-amber-200">கணிக்க</span>
+                    </button>
+
+                    {/* Bottom decorative segment */}
+                    <div className="bg-[#FCF8E3] border border-amber-200 rounded-2xl py-3 flex justify-center items-center shadow-inner relative overflow-hidden group h-14" id="decor_om_box_desktop">
+                      <span className="text-4xl text-[#8A1A1A]/85 font-black group-hover:rotate-12 transition-transform duration-300 ease-out">🕉</span>
+                    </div>
                   </div>
 
-                  <span className="bg-amber-400 text-[#8A1A1A] font-black text-[9px] md:text-xs rounded-xl px-2.5 py-1.5 shadow border border-amber-200 flex-shrink-0">
-                    கணிக்க (Calculate)
-                  </span>
-                </button>
+                  {/* Right Column: Menu Grid and Navigation (7 cols on Desktop, 1 col on Mobile) */}
+                  <div className="md:col-span-7 space-y-4" id="desktop_right_panel">
+                    
+                    {/* Title Banner (நாள்காட்டி) */}
+                    <div className="text-center py-1 border-b-2 border-amber-500/30" id="main_banner_title">
+                      <h2 className="text-xl md:text-2xl font-black font-display text-[#8A1A1A] tracking-wider">நாள்காட்டி & நாட்குறிப்பு</h2>
+                      <p className="hidden md:block text-[11px] text-amber-900/70 font-semibold mt-0.5">Interactive Daily Sheet & Monthly Panchangam</p>
+                    </div>
 
-                {/* Bottom decorative segment (Large decorative Om icon with floral background) */}
-                <div className="bg-[#FCF8E3] border border-amber-200 rounded-2xl py-3.5 flex justify-center items-center shadow-inner relative overflow-hidden group" id="decor_om_box">
-                  <span className="text-4xl text-[#8A1A1A]/85 font-black group-hover:rotate-12 transition-transform duration-300 ease-out">
-                    🕉
-                  </span>
+                    {/* Grid menu: 4 main features layout */}
+                    <div className="grid grid-cols-2 gap-3" id="main_features_grid_responsive">
+                      {/* Option 1: Daily Sheet Calendar */}
+                      <button
+                        onClick={() => setActiveView('daily')}
+                        className="bg-[#8A1A1A] text-[#FDF6E2] p-5 rounded-2xl shadow-lg border-2 border-amber-400/50 flex flex-col items-center justify-center text-center transition hover:bg-[#9C2020] hover:scale-[1.02] active:scale-95 cursor-pointer h-36 md:h-32 relative overflow-hidden group"
+                        id="btn_to_daily_sheet"
+                      >
+                        <Calendar className="w-8 h-8 md:w-7 md:h-7 text-amber-300 mb-2 md:mb-1.5 group-hover:rotate-12 transition-transform" />
+                        <span className="text-sm font-black font-display tracking-tight">நாள்காட்டி</span>
+                        <span className="text-[10px] opacity-75 mt-1 md:mt-0.5 block">Daily Sheet</span>
+                        <span className="absolute bottom-2 right-3 font-mono font-black text-2xl text-white/5 group-hover:text-white/10 transition-colors">31</span>
+                      </button>
+
+                      {/* Option 2: Monthly Grid Calendar */}
+                      <button
+                        onClick={() => setActiveView('monthly')}
+                        className="bg-[#8A1A1A] text-[#FDF6E2] p-5 rounded-2xl shadow-lg border-2 border-amber-400/50 flex flex-col items-center justify-center text-center transition hover:bg-[#9C2020] hover:scale-[1.02] active:scale-95 cursor-pointer h-36 md:h-32 relative overflow-hidden group"
+                        id="btn_to_monthly_grid"
+                      >
+                        <div className="grid grid-cols-3 gap-0.5 w-7 h-7 md:w-6 md:h-6 mb-2 md:mb-1.5 group-hover:scale-110 transition-transform text-amber-300">
+                          {[...Array(9)].map((_, i) => (
+                            <div key={i} className="bg-amber-300 w-1.5 h-1.5 rounded-sm" />
+                          ))}
+                        </div>
+                        <span className="text-sm font-black font-display tracking-tight">மாதகாட்டி</span>
+                        <span className="text-[10px] opacity-75 mt-1 md:mt-0.5 block">Monthly Calendar</span>
+                      </button>
+
+                      {/* Option 3: Festivals list */}
+                      <button
+                        onClick={() => setActiveView('festivals')}
+                        className="bg-[#8A1A1A] text-[#FDF6E2] p-5 rounded-2xl shadow-lg border-2 border-amber-400/50 flex flex-col items-center justify-center text-center transition hover:bg-[#9C2020] hover:scale-[1.02] active:scale-95 cursor-pointer h-36 md:h-32 relative overflow-hidden group"
+                        id="btn_to_festivals"
+                      >
+                        <Sparkles className="w-8 h-8 md:w-7 md:h-7 text-amber-300 mb-2 md:mb-1.5 group-hover:rotate-45 transition-transform" />
+                        <span className="text-xs md:text-sm font-black font-display tracking-tight leading-tight">பண்டிகை, விடுமுறைகள்</span>
+                        <span className="text-[9px] opacity-75 mt-1 md:mt-0.5 block">Festivals / Holidays</span>
+                      </button>
+
+                      {/* Option 4: Fasting schedule */}
+                      <button
+                        onClick={() => setActiveView('fasting')}
+                        className="bg-[#8A1A1A] text-[#FDF6E2] p-5 rounded-2xl shadow-lg border-2 border-amber-400/50 flex flex-col items-center justify-center text-center transition hover:bg-[#9C2020] hover:scale-[1.02] active:scale-95 cursor-pointer h-36 md:h-32 relative overflow-hidden group"
+                        id="btn_to_fasting"
+                      >
+                        <Award className="w-8 h-8 md:w-7 md:h-7 text-amber-300 mb-2 md:mb-1.5 group-hover:scale-110 transition-transform" />
+                        <span className="text-xs md:text-sm font-black font-display tracking-tight leading-tight">முக்கிய விரத நாட்கள்</span>
+                        <span className="text-[9px] opacity-75 mt-1 md:mt-0.5 block">Fasting Schedule</span>
+                      </button>
+                    </div>
+
+                    {/* Full-width Astrology row */}
+                    <button
+                      onClick={() => setActiveView('astrology')}
+                      className="w-full bg-white border-2 border-[#8A1A1A]/80 rounded-2xl p-4 flex items-center justify-center space-x-3 shadow hover:bg-amber-50 transition cursor-pointer"
+                      id="btn_to_astrology"
+                    >
+                      <Compass className="w-6 h-6 text-[#8A1A1A] animate-spin-slow flex-shrink-0" />
+                      <div className="text-left">
+                        <span className="text-sm font-black text-[#8A1A1A] block">ஜோதிடம் மற்றும் ஜாதகம்</span>
+                        <span className="text-[10px] font-bold text-amber-800 block leading-none">Daily Astrology Guide & Horoscopes</span>
+                      </div>
+                    </button>
+
+                    {/* Mobile-only Banners (hidden on desktop to avoid repetition) */}
+                    <button
+                      onClick={() => {
+                        setSelectedDateStr('2026-07-13');
+                        setActiveView('astrology');
+                        triggerToast('ஜாதகம் கணிக்கும் பக்கத்திற்கு செல்கிறது...');
+                      }}
+                      className="w-full md:hidden bg-[#8A1A1A] text-[#FDF6E2] border-2 border-amber-400 rounded-2xl shadow-lg p-4 flex items-center justify-between hover:bg-[#9C2020] hover:scale-[1.01] active:scale-95 transition relative overflow-hidden group cursor-pointer"
+                      id="btn_jathagam_consultation"
+                    >
+                      <div className="flex items-center space-x-3 z-10">
+                        <div className="w-11 h-11 bg-white/15 rounded-full flex items-center justify-center border border-amber-300/40 relative">
+                          <div className="absolute inset-0 bg-amber-400/20 rounded-full animate-ping" />
+                          <Flame className="w-6 h-6 text-amber-300 fill-amber-200 animate-pulse" />
+                        </div>
+                        <div className="text-left leading-tight">
+                          <h4 className="text-xs md:text-sm font-black text-amber-200">ஓம் ஆஸ்ட்ரோ (Om Astro)</h4>
+                          <p className="text-[9px] md:text-xs text-amber-100/90 font-medium mt-0.5">கணினி ஜாதகம் கணித்தல் - வெறும் ₹30 முதல்</p>
+                        </div>
+                      </div>
+                      <span className="bg-amber-400 text-[#8A1A1A] font-black text-[9px] md:text-xs rounded-xl px-2.5 py-1.5 shadow border border-amber-200 flex-shrink-0">கணிக்க</span>
+                    </button>
+
+                    <div className="bg-[#FCF8E3] border border-amber-200 rounded-2xl py-3.5 flex md:hidden justify-center items-center shadow-inner relative overflow-hidden group" id="decor_om_box">
+                      <span className="text-4xl text-[#8A1A1A]/85 font-black group-hover:rotate-12 transition-transform duration-300 ease-out">🕉</span>
+                    </div>
+
+                  </div>
+
                 </div>
 
               </div>

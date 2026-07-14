@@ -120,7 +120,7 @@ export default function MonthlyCalendarView({ onSelectDay, onClose }: MonthlyCal
       <div className="flex-grow overflow-y-auto pb-20 scrollbar-thin flex flex-col" id="monthly_scroll_body">
 
       {/* Month Switching Controls */}
-      <div className="max-w-md w-full mx-auto px-4 mt-4" id="month_navigation">
+      <div className="max-w-md md:max-w-2xl lg:max-w-3xl w-full mx-auto px-4 mt-4" id="month_navigation">
         <div className="flex items-center justify-between bg-[#FCE5A2] p-3 rounded-2xl border-2 border-[#8A1A1A] shadow-md">
           <button 
             onClick={prevMonth} 
@@ -150,7 +150,7 @@ export default function MonthlyCalendarView({ onSelectDay, onClose }: MonthlyCal
       </div>
 
       {/* Calendar Grid Container */}
-      <div className="flex-grow max-w-md w-full mx-auto px-4 mt-4" id="calendar_grid_wrapper">
+      <div className="flex-grow max-w-md md:max-w-2xl lg:max-w-3xl w-full mx-auto px-4 mt-4" id="calendar_grid_wrapper">
         <div className="bg-white border-2 border-[#8A1A1A] rounded-2xl shadow-lg p-2.5 overflow-hidden">
           {/* Weekday Labels */}
           <div className="grid grid-cols-7 gap-1 text-center font-bold text-xs border-b border-[#8A1A1A]/20 pb-2 mb-1">
@@ -249,7 +249,7 @@ export default function MonthlyCalendarView({ onSelectDay, onClose }: MonthlyCal
       </div>
 
       {/* Selected Day Quick-Look Drawer (Interactive drawer appearing when a day is clicked) */}
-      <div className="max-w-md w-full mx-auto px-4 mt-4" id="drawer_area">
+      <div className="max-w-md md:max-w-2xl lg:max-w-3xl w-full mx-auto px-4 mt-4" id="drawer_area">
         <AnimatePresence>
           {selectedDayInfo ? (
             <motion.div

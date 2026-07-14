@@ -86,7 +86,7 @@ export default function FestivalsView({ onSelectDay, onClose }: FestivalsViewPro
       <div className="flex-grow overflow-y-auto pb-20 scrollbar-thin flex flex-col" id="festivals_scroll_body">
 
       {/* Search Input */}
-      <div className="max-w-md w-full mx-auto px-4 mt-4" id="festivals_search">
+      <div className="max-w-md md:max-w-2xl lg:max-w-3xl w-full mx-auto px-4 mt-4" id="festivals_search">
         <div className="relative flex items-center bg-white border-2 border-[#8A1A1A] rounded-2xl shadow-sm overflow-hidden px-3 py-1.5 focus-within:ring-2 focus-within:ring-amber-500/30 transition">
           <Search className="w-5 h-5 text-amber-800 mr-2" />
           <input 
@@ -101,7 +101,7 @@ export default function FestivalsView({ onSelectDay, onClose }: FestivalsViewPro
       </div>
 
       {/* Categories Tabs */}
-      <div className="max-w-md w-full mx-auto px-4 mt-3" id="festivals_tabs">
+      <div className="max-w-md md:max-w-2xl lg:max-w-3xl w-full mx-auto px-4 mt-3" id="festivals_tabs">
         <div className="flex space-x-1 bg-amber-100 p-1 rounded-xl border border-amber-200 overflow-x-auto scrollbar-none" id="tabs_scrollable">
           <button 
             onClick={() => setSelectedTab('all')}
@@ -137,7 +137,7 @@ export default function FestivalsView({ onSelectDay, onClose }: FestivalsViewPro
       </div>
 
       {/* Festivals List */}
-      <div className="flex-grow max-w-md w-full mx-auto px-4 mt-4 space-y-3" id="festivals_list_container">
+      <div className="flex-grow max-w-md md:max-w-2xl lg:max-w-3xl w-full mx-auto px-4 mt-4 space-y-3" id="festivals_list_container">
         {filteredFestivals.length > 0 ? (
           filteredFestivals.map((fest) => (
             <div 
