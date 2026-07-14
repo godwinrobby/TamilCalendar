@@ -343,68 +343,6 @@ export default function App() {
                   </button>
                 </div>
 
-                {/* Today's Panchangam (தினசரி பஞ்சாங்கம்) Widget */}
-                <div className="bg-white border-2 border-[#8A1A1A] rounded-2xl p-4 shadow-sm space-y-3" id="panchangam_widget">
-                  <div className="flex items-center justify-between border-b border-amber-500/20 pb-2">
-                    <h3 className="text-xs font-black text-[#8A1A1A] flex items-center space-x-1.5">
-                      <span className="text-sm">📅</span>
-                      <span>இன்றைய பஞ்சாங்கம் (Almanac)</span>
-                    </h3>
-                    <span className="text-[9px] font-black text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">
-                      {headerDateInfo.isAuspicious ? 'சுப நாள் (Auspicious)' : 'சாதாரண நாள்'}
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2 text-[11px]">
-                    <div className="bg-amber-50/40 p-2 rounded-xl border border-amber-100">
-                      <span className="text-[9px] text-amber-800 font-bold block">திதி (Thithi)</span>
-                      <span className="font-extrabold text-[#8A1A1A]">{headerDateInfo.thithi}</span>
-                    </div>
-                    <div className="bg-amber-50/40 p-2 rounded-xl border border-amber-100">
-                      <span className="text-[9px] text-amber-800 font-bold block">நட்சத்திரம் (Star)</span>
-                      <span className="font-extrabold text-[#8A1A1A]">{headerDateInfo.nakshatram}</span>
-                    </div>
-                    <div className="bg-amber-50/40 p-2 rounded-xl border border-amber-100 col-span-2 flex justify-between items-center">
-                      <div>
-                        <span className="text-[9px] text-amber-800 font-bold block">நல்ல நேரம் (Auspicious Time)</span>
-                        <span className="font-extrabold text-[#8A1A1A] text-[10px]">காலை: {headerDateInfo.nallaNeram.morning} • மாலை: {headerDateInfo.nallaNeram.evening}</span>
-                      </div>
-                    </div>
-                    <div className="bg-amber-50/40 p-2 rounded-xl border border-amber-100 col-span-2">
-                      <span className="text-[9px] text-amber-800 font-bold block">யோகம் (Yogam)</span>
-                      <span className="font-extrabold text-[#8A1A1A]">{headerDateInfo.yogam}</span>
-                    </div>
-                  </div>
-
-                  <div className="bg-rose-50/40 p-3 rounded-xl border border-rose-100/60 text-[11px] space-y-1.5">
-                    <div className="flex justify-between">
-                      <span className="font-semibold text-rose-900">ராகு காலம் (Rahu):</span>
-                      <span className="font-bold text-rose-950">{headerDateInfo.raghuKalam}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-semibold text-amber-900">எமகண்டம் (Yama):</span>
-                      <span className="font-bold text-amber-950">{headerDateInfo.yamagandam}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-semibold text-emerald-900">சூலம் & பரிகாரம்:</span>
-                      <span className="font-bold text-emerald-950">{headerDateInfo.soolam} ({headerDateInfo.parigaram})</span>
-                    </div>
-                  </div>
-
-                  {headerDateInfo.festivals.length > 0 && (
-                    <div className="bg-amber-100/55 p-3 rounded-xl border border-amber-200/50">
-                      <span className="text-[9px] uppercase tracking-wider font-extrabold text-amber-800 block mb-1">விசேஷங்கள் / விரதங்கள்</span>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {headerDateInfo.festivals.map((fest, idx) => (
-                          <span key={idx} className="bg-[#8A1A1A] text-white font-extrabold text-[9px] px-2 py-0.5 rounded-lg">
-                            {fest}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
                 {/* Spiritual Quote Block */}
                 <div className="bg-[#FCF8E3]/60 border border-dashed border-amber-400/80 rounded-2xl p-4 text-center shadow-inner relative flex flex-col justify-center min-h-[90px]" id="desktop_quote_panel">
                   <span className="text-[9px] uppercase font-black tracking-widest text-amber-800 block mb-1">இன்றைய பொன்மொழி</span>

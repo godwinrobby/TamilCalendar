@@ -215,6 +215,57 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
               </div>
             </div>
 
+            {/* Traditional Date Banner Section (Exactly as per image) */}
+            <div className="bg-[#FFFDF5] px-5 py-4 border-b-2 border-[#8A1A1A]/10" id="traditional_date_banner_section">
+              {/* Top Meta Details Row */}
+              <div className="flex items-center justify-between text-center pb-2.5" id="traditional_header_metadata">
+                {/* Left Side: Tamil Year */}
+                <div className="flex flex-col items-start leading-none" id="meta_tamil_year">
+                  <span className="text-[9px] md:text-[10px] uppercase font-bold tracking-wider text-amber-800/80">TAMIL YEAR</span>
+                  <span className="text-xs md:text-sm font-extrabold text-[#8A1A1A] mt-1">{calendarInfo.tamilYear} வருடம்</span>
+                </div>
+
+                {/* Center Badge: Gregorian Year + Tamil Year Pill */}
+                <div className="bg-amber-100/75 border border-amber-300 px-3.5 py-1 rounded-full text-[11px] font-black text-amber-900 shadow-sm" id="meta_center_pill">
+                  {engYear} {calendarInfo.tamilYear}
+                </div>
+
+                {/* Right Side: Day Of Week */}
+                <div className="flex flex-col items-end leading-none" id="meta_day_of_week">
+                  <span className="text-[9px] md:text-[10px] uppercase font-bold tracking-wider text-amber-800/80">DAY OF WEEK</span>
+                  <span className="text-xs md:text-sm font-extrabold text-[#8A1A1A] mt-1">{calendarInfo.dayOfWeek}</span>
+                </div>
+              </div>
+
+              {/* Dotted Divider */}
+              <div className="border-t-2 border-dashed border-[#8A1A1A]/20 w-full my-2.5"></div>
+
+              {/* Gregorian and Tamil Dates side-by-side with Vertical Divider */}
+              <div className="flex items-center justify-around py-1" id="traditional_date_cards_container">
+                {/* Left Card: Gregorian Day */}
+                <div className="w-[45%] bg-[#FFF9D6] border-2 border-[#8A1A1A] rounded-2xl p-3 flex flex-col items-center justify-center shadow-inner" id="card_gregorian">
+                  <span className="text-4xl md:text-5xl font-black text-[#8A1A1A] tracking-tight">{engDay}</span>
+                  <span className="text-[10px] md:text-xs font-black text-amber-900 mt-1 uppercase text-center">
+                    {getEngMonthInTamil(selectedDateStr)} {engYear}
+                  </span>
+                </div>
+
+                {/* Vertical Divider Line */}
+                <div className="w-[1px] bg-amber-500/30 h-16" id="card_vertical_divider"></div>
+
+                {/* Right Card: Tamil Month & Tamil Day */}
+                <div className="w-[45%] bg-[#FFFCE8] border border-amber-300 rounded-2xl p-3 flex flex-col items-center justify-center shadow-sm" id="card_tamil">
+                  <span className="text-[9px] md:text-[10px] uppercase font-black text-amber-700">தமிழ் மாதம்</span>
+                  <span className="text-2xl md:text-3xl font-black text-[#8A1A1A] tracking-tight mt-1">
+                    {calendarInfo.tamilMonth}
+                  </span>
+                  <span className="text-2xl md:text-3xl font-extrabold text-[#D97706] tracking-tight mt-0.5">
+                    {calendarInfo.tamilDay}
+                  </span>
+                </div>
+              </div>
+            </div>
+
             {/* 4 Detailed Rows with Dividers */}
             <div className="flex-grow divide-y divide-[#8A1A1A]/10" id="astrology_rows_container">
               
