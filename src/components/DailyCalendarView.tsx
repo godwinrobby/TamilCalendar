@@ -234,7 +234,7 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
               <div className="flex items-center justify-between text-center pb-2.5" id="traditional_header_metadata">
                 {/* Left Side: Tamil Year */}
                 <div className="flex flex-col items-start leading-none" id="meta_tamil_year">
-                  <span className="text-[9px] md:text-[10px] uppercase font-bold tracking-wider text-amber-800/80">TAMIL YEAR</span>
+                  <span className="text-[9px] md:text-[10px] font-bold tracking-wider text-amber-800/80">தமிழ் வருடம்</span>
                   <span className="text-xs md:text-sm font-extrabold text-[#8A1A1A] mt-1">{calendarInfo.tamilYear} வருடம்</span>
                 </div>
 
@@ -245,7 +245,7 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
 
                 {/* Right Side: Day Of Week */}
                 <div className="flex flex-col items-end leading-none" id="meta_day_of_week">
-                  <span className="text-[9px] md:text-[10px] uppercase font-bold tracking-wider text-amber-800/80">DAY OF WEEK</span>
+                  <span className="text-[9px] md:text-[10px] font-bold tracking-wider text-amber-800/80">கிழமை</span>
                   <span className="text-xs md:text-sm font-extrabold text-[#8A1A1A] mt-1">{calendarInfo.dayOfWeek}</span>
                 </div>
               </div>
@@ -368,7 +368,7 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
         >
           <div className="flex items-center space-x-2">
             <span className="text-sm">📅</span>
-            <span>கூடுதல் பஞ்சாங்க விவரங்கள் (Panchangam Details)</span>
+            <span>கூடுதல் பஞ்சாங்க விவரங்கள்</span>
           </div>
           <motion.div
             animate={{ rotate: isExpanded ? 90 : 0 }}
@@ -392,11 +392,11 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
                 {calendarInfo.isAuspicious ? (
                   <div className="inline-flex items-center space-x-1.5 bg-emerald-100 text-emerald-800 border border-emerald-300 px-3 py-1 rounded-full text-xs font-extrabold shadow-sm">
                     <Award className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>சுப முகூர்த்த நாள் (Auspicious Day)</span>
+                    <span>சுப முகூர்த்த நாள்</span>
                   </div>
                 ) : (
                   <div className="inline-flex items-center space-x-1.5 bg-amber-50 text-amber-800 border border-amber-200 px-3 py-1 rounded-full text-xs font-bold shadow-sm">
-                    <span>சாதாரண நாள் (Standard Day)</span>
+                    <span>சாதாரண நாள்</span>
                   </div>
                 )}
               </div>
@@ -447,11 +447,11 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
               <div className="bg-amber-500/5 border border-amber-600/25 rounded-xl p-2.5 text-xs">
                 <div className="grid grid-cols-2 gap-2 text-[10px] font-bold">
                   <div>
-                    <span className="text-amber-800 block font-medium text-[8px]">சூலம் (Soolam):</span>
+                    <span className="text-amber-800 block font-medium text-[8px]">சூலம்:</span>
                     <p className="text-red-900 font-extrabold">{calendarInfo.soolam}</p>
                   </div>
                   <div>
-                    <span className="text-amber-800 block font-medium text-[8px]">பரிகாரம் (Remedy):</span>
+                    <span className="text-amber-800 block font-medium text-[8px]">பரிகாரம்:</span>
                     <p className="text-red-900 font-extrabold">{calendarInfo.parigaram}</p>
                   </div>
                 </div>
