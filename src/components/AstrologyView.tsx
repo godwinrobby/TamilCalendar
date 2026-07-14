@@ -5,15 +5,16 @@
 
 import React, { useState } from 'react';
 import { ChevronLeft, Compass, Send, User, Calendar, Clock, MapPin, Award, Star, RefreshCw, FileText } from 'lucide-react';
-import { calculateJathagam, DAILY_RASI_PALAN } from '../utils/tamilCalendar';
+import { calculateJathagam, DAILY_RASI_PALAN, getRasiPalanForDate } from '../utils/tamilCalendar';
 import { JathagamInput, JathagamResult } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface AstrologyViewProps {
   onClose: () => void;
+  selectedDateStr?: string;
 }
 
-export default function AstrologyView({ onClose }: AstrologyViewProps) {
+export default function AstrologyView({ onClose, selectedDateStr = '2026-01-01' }: AstrologyViewProps) {
   const [activeSubTab, setActiveSubTab] = useState<'rasiPalan' | 'jathagam'>('rasiPalan');
   
   // Daily Rasi Palan State
@@ -128,50 +129,55 @@ export default function AstrologyView({ onClose }: AstrologyViewProps) {
           </div>
 
           {/* Zodiac Details Card */}
-          <div className="bg-[#FCF8E3] border-2 border-[#8A1A1A] rounded-2xl p-5 shadow-lg relative overflow-hidden" id="rasi_details_card">
-            
-            {/* Compass design icon overlay */}
-            <div className="absolute right-0 bottom-0 opacity-5 pointer-events-none">
-              <Compass className="w-56 h-56 rotate-45" />
-            </div>
+          {(() => {
+            const currentRasiPalan = getRasiPalanForDate(selectedDateStr, selectedRasi);
+            return (
+              <div className="bg-[#FCF8E3] border-2 border-[#8A1A1A] rounded-2xl p-5 shadow-lg relative overflow-hidden" id="rasi_details_card">
+                
+                {/* Compass design icon overlay */}
+                <div className="absolute right-0 bottom-0 opacity-5 pointer-events-none">
+                  <Compass className="w-56 h-56 rotate-45" />
+                </div>
 
-            {/* Title & Badge */}
-            <div className="flex items-start justify-between">
-              <div>
-                <h3 className="text-xl font-black text-[#8A1A1A]">{DAILY_RASI_PALAN[selectedRasi].rasi}</h3>
-                <span className="text-[10px] font-bold text-amber-800 block mt-0.5">{selectedRasi}</span>
+                {/* Title & Badge */}
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 className="text-xl font-black text-[#8A1A1A]">{currentRasiPalan.rasi}</h3>
+                    <span className="text-[10px] font-bold text-amber-800 block mt-0.5">{selectedRasi}</span>
+                  </div>
+
+                  <span className={`text-[10px] font-bold border rounded-full px-3 py-1 shadow-sm flex items-center ${getStatusBadgeColor(currentRasiPalan.status)}`}>
+                    {getStatusTamil(currentRasiPalan.status)}
+                  </span>
+                </div>
+
+                {/* Stars Rating Visualizer */}
+                <div className="my-4 flex items-center space-x-1 bg-amber-500/10 rounded-xl px-3 py-1.5 border border-amber-500/20 w-fit" id="rasi_rating">
+                  <span className="text-xs font-bold text-amber-900 mr-2">இன்றைய பலன்:</span>
+                  {[...Array(5)].map((_, idx) => (
+                    <Star 
+                      key={idx} 
+                      className={`w-4 h-4 ${idx < currentRasiPalan.rating ? 'text-amber-500 fill-amber-400' : 'text-amber-200/50'}`} 
+                    />
+                  ))}
+                </div>
+
+                {/* Prediction text */}
+                <div className="border-t border-dashed border-[#8A1A1A]/20 pt-3" id="prediction_text_area">
+                  <span className="text-[10px] font-extrabold text-amber-900 block mb-1 uppercase tracking-wider">இன்றைய பலன்கள் (Prediction)</span>
+                  <p className="text-xs md:text-sm text-amber-950 font-medium leading-relaxed">
+                    {currentRasiPalan.prediction}
+                  </p>
+                </div>
+
+                {/* Reminders / Remedies */}
+                <div className="mt-4 bg-[#F9EAA2]/50 p-3 rounded-xl border border-amber-300 flex items-start space-x-2 text-xs text-amber-900 font-medium">
+                  <span className="text-base">☸</span>
+                  <p>இன்று குலதெய்வம் மற்றும் தியானம் மேற்கொள்வது மன அமைதியை அதிகரித்து, நற்பலன்களை மேலும் வலுப்படுத்தும்.</p>
+                </div>
               </div>
-
-              <span className={`text-[10px] font-bold border rounded-full px-3 py-1 shadow-sm flex items-center ${getStatusBadgeColor(DAILY_RASI_PALAN[selectedRasi].status)}`}>
-                {getStatusTamil(DAILY_RASI_PALAN[selectedRasi].status)}
-              </span>
-            </div>
-
-            {/* Stars Rating Visualizer */}
-            <div className="my-4 flex items-center space-x-1 bg-amber-500/10 rounded-xl px-3 py-1.5 border border-amber-500/20 w-fit" id="rasi_rating">
-              <span className="text-xs font-bold text-amber-900 mr-2">இன்றைய பலன்:</span>
-              {[...Array(5)].map((_, idx) => (
-                <Star 
-                  key={idx} 
-                  className={`w-4 h-4 ${idx < DAILY_RASI_PALAN[selectedRasi].rating ? 'text-amber-500 fill-amber-400' : 'text-amber-200/50'}`} 
-                />
-              ))}
-            </div>
-
-            {/* Prediction text */}
-            <div className="border-t border-dashed border-[#8A1A1A]/20 pt-3" id="prediction_text_area">
-              <span className="text-[10px] font-extrabold text-amber-900 block mb-1 uppercase tracking-wider">இன்றைய பலன்கள் (Prediction)</span>
-              <p className="text-xs md:text-sm text-amber-950 font-medium leading-relaxed">
-                {DAILY_RASI_PALAN[selectedRasi].prediction}
-              </p>
-            </div>
-
-            {/* Reminders / Remedies */}
-            <div className="mt-4 bg-[#F9EAA2]/50 p-3 rounded-xl border border-amber-300 flex items-start space-x-2 text-xs text-amber-900 font-medium">
-              <span className="text-base">☸</span>
-              <p>இன்று குலதெய்வம் மற்றும் தியானம் மேற்கொள்வது மன அமைதியை அதிகரித்து, நற்பலன்களை மேலும் வலுப்படுத்தும்.</p>
-            </div>
-          </div>
+            );
+          })()}
         </div>
       )}
 

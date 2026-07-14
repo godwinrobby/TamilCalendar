@@ -238,6 +238,54 @@ export function getTamilCalendarInfo(dateInput: Date | string): TamilDateInfo {
   const { name: thithi, index: thithiIdx } = getThithiForDate(date);
   const { name: nakshatram, index: nakIdx } = getNakshatramForDate(date);
 
+  // Check if there is an imported MySQL record for this date
+  const records = getImportedRecordsMap();
+  const dbRecord = records[engStr];
+
+  if (dbRecord) {
+    const rawFestivals = dbRecord.specialToday || '';
+    const parsedFestivals = rawFestivals
+      .split(/[,;\n]+/)
+      .map((f: string) => f.trim())
+      .filter((f: string) => f.length > 0);
+
+    const isAuspicious = (dbRecord.yogam || '') !== 'மரண யோகம்';
+
+    return {
+      englishDate: engStr,
+      tamilYear: dbRecord.tamilYear || tamilYear,
+      tamilMonth: dbRecord.tamilMonth || tamilMonth,
+      tamilDay: parseInt(dbRecord.tamilDay) || tamilDay,
+      dayOfWeek: dbRecord.dayOfWeekTamil || dayOfWeek,
+      thithi: dbRecord.thithi || thithi,
+      nakshatram: dbRecord.nakshatram || nakshatram,
+      yogam: dbRecord.yogam || 'சித்த யோகம்',
+      nallaNeram: {
+        morning: dbRecord.nallaNeramMorning || 'காலை 09:00 - 10:30',
+        evening: dbRecord.nallaNeramEvening || 'மாலை 04:30 - 06:00',
+      },
+      gowriNallaNeram: {
+        morning: dbRecord.gowriMorning || 'காலை 12:00 - 01:30',
+        evening: dbRecord.gowriEvening || 'மாலை 06:00 - 07:30',
+      },
+      raghuKalam: dbRecord.raghuKalam || 'காலை 10:30 - 12:00',
+      yamagandam: dbRecord.yamagandam || 'பகல் 01:30 - 03:00',
+      kuligai: dbRecord.kuligai || 'காலை 07:30 - 09:00',
+      soolam: dbRecord.soolam || 'வடக்கு',
+      parigaram: 'தயிர்',
+      isAuspicious,
+      festivals: parsedFestivals,
+      nextNakshatram: NAKSHATRAMS[(nakIdx + 1) % 27],
+      nextThithi: THITHIS[thithiIdx % 30],
+      chandrashtamam: dbRecord.chandrashtamam || 'விசாகம்',
+      nakshatramTime: 'இன்று முழுவதும்',
+      thithiTime: 'இன்று முழுவதும்',
+      phaseArrow: thithiIdx <= 15 ? 'up' : 'down',
+      isPradosham: thithiIdx === 13 || thithiIdx === 28,
+      isMaranaYogam: (dbRecord.yogam || '') === 'மரண யோகம்',
+    };
+  }
+
   // Traditional yogam based on Day + Nakshatram index
   const yogamIdx = (weekdayIndex + nakIdx) % 3;
   const yogams: Array<'சித்த யோகம்' | 'அமிர்த யோகம்' | 'மரண யோகம்'> = ['சித்த யோகம்', 'அமிர்த யோகம்', 'மரண யோகம்'];
@@ -678,3 +726,68 @@ export const DAILY_RASI_PALAN: Record<string, { rasi: string; status: 'Excellent
     prediction: 'உணவு விஷயத்தில் கவனம் தேவை. பிறருடன் வீண் விவாதங்களை தவிர்க்கவும். பொறுமை காப்பது நன்மையளிக்கும்.'
   }
 };
+
+/**
+ * Gets imported database records map from localStorage (Simulating a MySQL table database)
+ */
+export function getImportedRecordsMap(): Record<string, any> {
+  if (typeof window === 'undefined') return {};
+  try {
+    const data = localStorage.getItem('mysql_table_tamil_calendar');
+    return data ? JSON.parse(data) : {};
+  } catch (e) {
+    console.error('Error reading mysql_table_tamil_calendar', e);
+    return {};
+  }
+}
+
+/**
+ * Saves imported database records map to localStorage (Simulating a MySQL table database)
+ */
+export function saveImportedRecordsMap(map: Record<string, any>): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem('mysql_table_tamil_calendar', JSON.stringify(map));
+  } catch (e) {
+    console.error('Error saving mysql_table_tamil_calendar', e);
+  }
+}
+
+/**
+ * Returns rasi palan for a date, checking if it is overridden in the simulated MySQL table
+ */
+export function getRasiPalanForDate(dateStr: string, rasiNameWithEng: string): { rasi: string; status: 'Excellent' | 'Good' | 'Average'; prediction: string; rating: number } {
+  const records = getImportedRecordsMap();
+  const dbRecord = records[dateStr];
+  
+  const original = DAILY_RASI_PALAN[rasiNameWithEng];
+  if (!original) {
+    return { rasi: rasiNameWithEng, status: 'Average', prediction: 'இன்று நற்பலன்கள் கிடைக்கும்.', rating: 3 };
+  }
+
+  if (dbRecord) {
+    const rasiTamilName = original.rasi; // e.g. "மேஷம்"
+    // Handle lowercasing or exact matching of keys like 'mesham', 'rishabam', 'மேஷம்', 'ரிஷபம்'
+    const cleanKey = rasiTamilName.trim();
+    const customPrediction = dbRecord[cleanKey] || dbRecord[cleanKey.toLowerCase()];
+    if (customPrediction) {
+      let status: 'Excellent' | 'Good' | 'Average' = 'Good';
+      let rating = 4;
+      if (customPrediction.includes('சிறப்பு') || customPrediction.includes('அதிர்ஷ்டம்') || customPrediction.includes('வெற்றி') || customPrediction.includes('லாபம்')) {
+        status = 'Excellent';
+        rating = 5;
+      } else if (customPrediction.includes('கவனம்') || customPrediction.includes('நிதானம்') || customPrediction.includes('தவிர்க்கவும்') || customPrediction.includes('அலைச்சல்')) {
+        status = 'Average';
+        rating = 3;
+      }
+      return {
+        rasi: rasiTamilName,
+        status,
+        prediction: customPrediction,
+        rating
+      };
+    }
+  }
+
+  return original;
+}

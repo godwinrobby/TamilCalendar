@@ -27,16 +27,17 @@ import MonthlyCalendarView from './components/MonthlyCalendarView';
 import AstrologyView from './components/AstrologyView';
 import FestivalsView from './components/FestivalsView';
 import FastingDaysView from './components/FastingDaysView';
+import AdminView from './components/AdminView';
 import { motion, AnimatePresence } from 'motion/react';
 
-type AppView = 'dashboard' | 'daily' | 'monthly' | 'astrology' | 'festivals' | 'fasting';
+type AppView = 'dashboard' | 'daily' | 'monthly' | 'astrology' | 'festivals' | 'fasting' | 'admin';
 
 const parseHashRoute = () => {
   const hash = typeof window !== 'undefined' ? window.location.hash || '#/dashboard' : '#/dashboard';
   const [pathPart, queryPart] = hash.split('?');
   const view = pathPart.replace('#/', '') || 'dashboard';
   
-  const validViews: AppView[] = ['dashboard', 'daily', 'monthly', 'astrology', 'festivals', 'fasting'];
+  const validViews: AppView[] = ['dashboard', 'daily', 'monthly', 'astrology', 'festivals', 'fasting', 'admin'];
   const activeView = validViews.includes(view as AppView) ? (view as AppView) : 'dashboard';
   
   let date = getCurrentISTDateString();
@@ -374,7 +375,7 @@ export default function App() {
 
             {activeView === 'astrology' && (
               <motion.div key="astrology_view" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="h-full flex flex-col overflow-hidden">
-                <AstrologyView onClose={() => navigateTo('dashboard')} />
+                <AstrologyView selectedDateStr={selectedDateStr} onClose={() => navigateTo('dashboard')} />
               </motion.div>
             )}
 
@@ -387,6 +388,12 @@ export default function App() {
             {activeView === 'fasting' && (
               <motion.div key="fasting_view" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="h-full flex flex-col overflow-hidden">
                 <FastingDaysView onSelectDay={handleSelectDay} onClose={() => navigateTo('dashboard')} />
+              </motion.div>
+            )}
+
+            {activeView === 'admin' && (
+              <motion.div key="admin_view" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="h-full flex flex-col overflow-hidden">
+                <AdminView onClose={() => navigateTo('dashboard')} />
               </motion.div>
             )}
           </AnimatePresence>
@@ -794,7 +801,7 @@ export default function App() {
 
                 {activeView === 'astrology' && (
                   <motion.div key="desktop_astrology" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full">
-                    <AstrologyView onClose={() => navigateTo('dashboard')} />
+                    <AstrologyView selectedDateStr={selectedDateStr} onClose={() => navigateTo('dashboard')} />
                   </motion.div>
                 )}
 
@@ -807,6 +814,12 @@ export default function App() {
                 {activeView === 'fasting' && (
                   <motion.div key="desktop_fasting" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full">
                     <FastingDaysView onSelectDay={handleSelectDay} onClose={() => navigateTo('dashboard')} />
+                  </motion.div>
+                )}
+
+                {activeView === 'admin' && (
+                  <motion.div key="desktop_admin" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full">
+                    <AdminView onClose={() => navigateTo('dashboard')} />
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -852,6 +865,12 @@ export default function App() {
                 <p>• பதிப்பு (Version): 1.0.0 (பராபவ வருடம்)</p>
                 <p>• தொழில்நுட்பம்: React 19, Tailwind CSS v4, Motion</p>
                 <p>• தளம்: AI Studio Sandbox Space</p>
+                <button
+                  onClick={() => { setIsAboutOpen(false); navigateTo('admin'); }}
+                  className="mt-2 w-full bg-amber-600 hover:bg-amber-700 text-white py-1 rounded-lg text-[10px] font-bold transition flex items-center justify-center space-x-1 cursor-pointer"
+                >
+                  <span>நிர்வாகி பகுதி (Admin Login)</span>
+                </button>
               </div>
               <button
                 onClick={() => setIsAboutOpen(false)}
