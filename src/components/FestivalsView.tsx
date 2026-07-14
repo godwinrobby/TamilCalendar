@@ -74,7 +74,7 @@ export default function FestivalsView({ onSelectDay, onClose }: FestivalsViewPro
           <Search className="w-5 h-5 text-amber-800 mr-2" />
           <input 
             type="text" 
-            placeholder="தேடவும் (e.g., பொங்கல், தீபாவளி, New Year)" 
+            placeholder="தேடவும் (உதாரணமாக: பொங்கல், தீபாவளி, புத்தாண்டு)" 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full bg-transparent border-none outline-none text-[#5C1A1A] font-bold text-xs md:text-sm placeholder-amber-800/40"
@@ -126,9 +126,6 @@ export default function FestivalsView({ onSelectDay, onClose }: FestivalsViewPro
                 <h3 className="text-sm font-black text-[#8A1A1A] leading-tight flex items-center space-x-1">
                   <span>{fest.tamilName}</span>
                 </h3>
-                <span className="text-[10px] font-bold text-amber-800 block mt-0.5">
-                  {fest.name}
-                </span>
 
                 {/* Date labels */}
                 <div className="flex flex-wrap items-center mt-2 text-[10px] gap-x-2 gap-y-0.5">
