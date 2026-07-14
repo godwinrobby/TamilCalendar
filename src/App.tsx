@@ -135,6 +135,21 @@ export default function App() {
   const dateNum = parseInt(selectedDateStr.split('-')[2]) || 1;
   const randomQuote = spiritualQuotes[dateNum % spiritualQuotes.length];
 
+  if (activeView === 'admin') {
+    return (
+      <div className="min-h-screen w-full bg-[#FFFDF0] text-[#5C1A1A] font-sans" id="app_root_admin">
+        <React.Suspense fallback={
+          <div className="min-h-screen flex flex-col items-center justify-center bg-[#FFFDF0] text-[#8A1A1A]">
+            <div className="w-10 h-10 border-4 border-amber-600 border-t-transparent rounded-full animate-spin mb-3"></div>
+            <span className="text-xs font-bold font-mono">நிர்வாகி பகுதி ஏற்றப்படுகிறது... (Loading Admin Module...)</span>
+          </div>
+        }>
+          <AdminView onClose={() => navigateTo('dashboard')} />
+        </React.Suspense>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-amber-50/20 md:bg-[#8A1A1A]/5 flex justify-center items-center text-[#5C1A1A] select-none md:p-6 lg:p-0 font-sans" id="app_root">
       
