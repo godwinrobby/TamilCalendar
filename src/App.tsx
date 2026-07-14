@@ -31,18 +31,67 @@ import { motion, AnimatePresence } from 'motion/react';
 
 type AppView = 'dashboard' | 'daily' | 'monthly' | 'astrology' | 'festivals' | 'fasting';
 
+const parseHashRoute = () => {
+  const hash = typeof window !== 'undefined' ? window.location.hash || '#/dashboard' : '#/dashboard';
+  const [pathPart, queryPart] = hash.split('?');
+  const view = pathPart.replace('#/', '') || 'dashboard';
+  
+  const validViews: AppView[] = ['dashboard', 'daily', 'monthly', 'astrology', 'festivals', 'fasting'];
+  const activeView = validViews.includes(view as AppView) ? (view as AppView) : 'dashboard';
+  
+  let date = getCurrentISTDateString();
+  if (queryPart) {
+    const params = new URLSearchParams(queryPart);
+    const dateParam = params.get('date');
+    if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+      date = dateParam;
+    }
+  }
+  return { activeView, selectedDateStr: date };
+};
+
 export default function App() {
-  const [activeView, setActiveView] = useState<AppView>('dashboard');
-  const [selectedDateStr, setSelectedDateStr] = useState<string>(getCurrentISTDateString()); // Default to Indian Standard Time (GMT+5:30)
+  const initialRoute = parseHashRoute();
+  const [activeView, setActiveView] = useState<AppView>(initialRoute.activeView);
+  const [selectedDateStr, setSelectedDateStr] = useState<string>(initialRoute.selectedDateStr);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [isQuoteOpen, setIsQuoteOpen] = useState(false);
 
+  // Sync state with hash change
+  React.useEffect(() => {
+    const handleHashChange = () => {
+      const { activeView: newView, selectedDateStr: newDate } = parseHashRoute();
+      setActiveView(newView);
+      setSelectedDateStr(newDate);
+    };
+    
+    window.addEventListener('hashchange', handleHashChange);
+    
+    // Set initial hash if none exists to make URL look beautiful
+    if (!window.location.hash) {
+      window.location.hash = '#/dashboard';
+    }
+
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
+  }, []);
+
+  // Router-based navigation helper
+  const navigateTo = (view: AppView, dateStr?: string) => {
+    const dateToUse = dateStr || selectedDateStr;
+    let newHash = `#/${view}`;
+    if (view === 'daily' && dateToUse) {
+      newHash += `?date=${dateToUse}`;
+    }
+    window.location.hash = newHash;
+  };
+
   // Sync date when sub-components update it
   const handleSelectDay = (dateStr: string) => {
-    setSelectedDateStr(dateStr);
-    setActiveView('daily');
+    navigateTo('daily', dateStr);
   };
 
   // Get date information for the dashboard header
@@ -90,7 +139,7 @@ export default function App() {
           {activeView === 'dashboard' ? (
             <>
               {/* Logo & Branding */}
-              <div className="flex items-center space-x-2.5 cursor-pointer" onClick={() => setActiveView('dashboard')} id="header_date_box">
+              <div className="flex items-center space-x-2.5 cursor-pointer" onClick={() => navigateTo('dashboard')} id="header_date_box">
                 <span className="text-2xl leading-none animate-pulse">🕉</span>
                 <div className="leading-tight flex flex-col">
                   <span className="text-amber-300 font-extrabold text-sm tracking-wide">தமிழ் நாள்காட்டி</span>
@@ -142,7 +191,7 @@ export default function App() {
               {/* Back Button & Title */}
               <div className="flex items-center space-x-2.5" id="sub_header_left">
                 <button 
-                  onClick={() => setActiveView('dashboard')} 
+                  onClick={() => navigateTo('dashboard')} 
                   className="flex items-center justify-center w-8 h-8 bg-[#FFFDF0] text-[#8A1A1A] rounded-full hover:bg-amber-50 transition shadow-md border border-amber-200/50 active:scale-95 flex-shrink-0 cursor-pointer"
                   title="முகப்பு (Home)"
                   id="header_back_btn"
@@ -204,7 +253,7 @@ export default function App() {
                   
                   {/* Option 1: Daily Sheet Calendar */}
                   <button
-                    onClick={() => setActiveView('daily')}
+                    onClick={() => navigateTo('daily')}
                     className="bg-[#8A1A1A] text-[#FDF6E2] p-4 rounded-2xl shadow-sm border border-amber-400/20 flex flex-col items-center justify-center text-center transition hover:scale-[1.01] active:scale-95 cursor-pointer h-28 relative overflow-hidden group"
                     id="btn_to_daily_sheet"
                   >
@@ -215,7 +264,7 @@ export default function App() {
 
                   {/* Option 2: Monthly Grid Calendar */}
                   <button
-                    onClick={() => setActiveView('monthly')}
+                    onClick={() => navigateTo('monthly')}
                     className="bg-[#8A1A1A] text-[#FDF6E2] p-4 rounded-2xl shadow-sm border border-amber-400/20 flex flex-col items-center justify-center text-center transition hover:scale-[1.01] active:scale-95 cursor-pointer h-28 relative overflow-hidden group"
                     id="btn_to_monthly_grid"
                   >
@@ -230,7 +279,7 @@ export default function App() {
 
                   {/* Option 3: Festivals list */}
                   <button
-                    onClick={() => setActiveView('festivals')}
+                    onClick={() => navigateTo('festivals')}
                     className="bg-[#8A1A1A] text-[#FDF6E2] p-4 rounded-2xl shadow-sm border border-amber-400/20 flex flex-col items-center justify-center text-center transition hover:scale-[1.01] active:scale-95 cursor-pointer h-28 relative overflow-hidden group"
                     id="btn_to_festivals"
                   >
@@ -241,7 +290,7 @@ export default function App() {
 
                   {/* Option 4: Fasting schedule */}
                   <button
-                    onClick={() => setActiveView('fasting')}
+                    onClick={() => navigateTo('fasting')}
                     className="bg-[#8A1A1A] text-[#FDF6E2] p-4 rounded-2xl shadow-sm border border-amber-400/20 flex flex-col items-center justify-center text-center transition hover:scale-[1.01] active:scale-95 cursor-pointer h-28 relative overflow-hidden group"
                     id="btn_to_fasting"
                   >
@@ -257,7 +306,7 @@ export default function App() {
                 {/* Horizontal Astrology Row */}
                 <div id="astrology_row">
                   <button
-                    onClick={() => setActiveView('astrology')}
+                    onClick={() => navigateTo('astrology')}
                     className="w-full bg-white border-2 border-[#8A1A1A] rounded-2xl p-3 flex items-center justify-center space-x-3 shadow-sm hover:bg-amber-50/40 active:scale-95 transition cursor-pointer"
                     id="btn_to_astrology"
                   >
@@ -275,8 +324,7 @@ export default function App() {
                 <div id="consultation_banner_row">
                   <button
                     onClick={() => {
-                      setSelectedDateStr('2026-07-13');
-                      setActiveView('astrology');
+                      navigateTo('astrology', '2026-07-13');
                       triggerToast('ஜாதகம் கணிக்கும் பக்கத்திற்கு செல்கிறது...');
                     }}
                     className="w-full bg-[#8A1A1A] text-[#FDF6E2] border-2 border-amber-400 rounded-2xl shadow-md p-3.5 flex items-center justify-between hover:bg-[#9C2020] hover:scale-[1.01] active:scale-95 transition relative overflow-hidden group cursor-pointer"
@@ -376,31 +424,31 @@ export default function App() {
             {/* Active Sub-views (Render inside the frame) */}
             {activeView === 'daily' && (
               <motion.div key="daily_view" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="h-full flex flex-col overflow-hidden">
-                <DailyCalendarView initialDate={selectedDateStr} onClose={() => setActiveView('dashboard')} />
+                <DailyCalendarView initialDate={selectedDateStr} onClose={() => navigateTo('dashboard')} />
               </motion.div>
             )}
 
             {activeView === 'monthly' && (
               <motion.div key="monthly_view" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="h-full flex flex-col overflow-hidden">
-                <MonthlyCalendarView onSelectDay={handleSelectDay} onClose={() => setActiveView('dashboard')} />
+                <MonthlyCalendarView onSelectDay={handleSelectDay} onClose={() => navigateTo('dashboard')} />
               </motion.div>
             )}
 
             {activeView === 'astrology' && (
               <motion.div key="astrology_view" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="h-full flex flex-col overflow-hidden">
-                <AstrologyView onClose={() => setActiveView('dashboard')} />
+                <AstrologyView onClose={() => navigateTo('dashboard')} />
               </motion.div>
             )}
 
             {activeView === 'festivals' && (
               <motion.div key="festivals_view" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="h-full flex flex-col overflow-hidden">
-                <FestivalsView onSelectDay={handleSelectDay} onClose={() => setActiveView('dashboard')} />
+                <FestivalsView onSelectDay={handleSelectDay} onClose={() => navigateTo('dashboard')} />
               </motion.div>
             )}
 
             {activeView === 'fasting' && (
               <motion.div key="fasting_view" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="h-full flex flex-col overflow-hidden">
-                <FastingDaysView onSelectDay={handleSelectDay} onClose={() => setActiveView('dashboard')} />
+                <FastingDaysView onSelectDay={handleSelectDay} onClose={() => navigateTo('dashboard')} />
               </motion.div>
             )}
           </AnimatePresence>
@@ -426,7 +474,7 @@ export default function App() {
         {/* 3. PERSISTENT NAVIGATION BAR FOR CONTAINER */}
         <nav className="h-16 bg-[#8A1A1A] border-t-4 border-[#D97706] flex items-center justify-around text-[#FDF6E2] shrink-0 z-30 shadow-lg" id="bottom_navbar">
           <button 
-            onClick={() => setActiveView('astrology')}
+            onClick={() => navigateTo('astrology')}
             className={`flex flex-col items-center justify-center flex-grow py-1.5 transition cursor-pointer hover:bg-black/10 ${activeView === 'astrology' ? 'text-amber-300 font-extrabold bg-black/15' : 'opacity-80'}`}
             title="ஜோதிடம்"
             id="nav_btn_astrology"
@@ -436,7 +484,7 @@ export default function App() {
           </button>
 
           <button 
-            onClick={() => setActiveView('dashboard')}
+            onClick={() => navigateTo('dashboard')}
             className={`flex flex-col items-center justify-center flex-grow py-1.5 transition cursor-pointer hover:bg-black/10 ${activeView === 'dashboard' ? 'text-amber-300 font-extrabold bg-black/15' : 'opacity-80'}`}
             title="முகப்பு"
             id="nav_btn_home"
@@ -446,7 +494,7 @@ export default function App() {
           </button>
 
           <button 
-            onClick={() => setActiveView('fasting')}
+            onClick={() => navigateTo('fasting')}
             className={`flex flex-col items-center justify-center flex-grow py-1.5 transition cursor-pointer hover:bg-black/10 ${activeView === 'fasting' ? 'text-amber-300 font-extrabold bg-black/15' : 'opacity-80'}`}
             title="விரதங்கள்"
             id="nav_btn_fasting"

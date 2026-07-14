@@ -21,6 +21,14 @@ export interface TamilDateInfo {
   parigaram: string;
   isAuspicious: boolean;
   festivals: string[];
+  nextNakshatram?: string;
+  nextThithi?: string;
+  chandrashtamam?: string;
+  nakshatramTime?: string;
+  thithiTime?: string;
+  phaseArrow?: 'up' | 'down';
+  isPradosham?: boolean;
+  isMaranaYogam?: boolean;
 }
 
 export interface FestivalInfo {
