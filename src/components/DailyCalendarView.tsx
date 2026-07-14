@@ -138,7 +138,20 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
             initial="enter"
             animate="center"
             exit="exit"
-            className="w-full bg-[#FFFFFF] border-t-8 border-x-2 border-b-[6px] border-[#8A1A1A] rounded-2xl shadow-xl overflow-hidden relative flex flex-col min-h-[480px] flex-shrink-0"
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.6}
+            onDragEnd={(_event, info) => {
+              const swipeThreshold = 50;
+              if (info.offset.x > swipeThreshold) {
+                // Swipe right -> Show previous day
+                changeDate(-1);
+              } else if (info.offset.x < -swipeThreshold) {
+                // Swipe left -> Show next day
+                changeDate(1);
+              }
+            }}
+            className="w-full bg-[#FFFFFF] border-t-8 border-x-2 border-b-[6px] border-[#8A1A1A] rounded-2xl shadow-xl overflow-hidden relative flex flex-col min-h-[480px] flex-shrink-0 cursor-grab active:cursor-grabbing touch-pan-y selection:bg-transparent"
             id={`sheet_card_${selectedDateStr}`}
           >
             {/* Tear line effect decoration */}
@@ -344,6 +357,15 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
             </div>
           </motion.div>
         </AnimatePresence>
+      </div>
+
+      {/* Swipe Gesture Hint */}
+      <div className="text-center mt-2.5 mb-1.5 text-[10px] md:text-xs font-extrabold text-amber-800/60 select-none flex items-center justify-center space-x-1.5" id="swipe_gesture_hint">
+        <span className="animate-bounce">←</span>
+        <span>தேதியை மாற்ற இடப்புறம் / வலப்புறம் ஸ்வைப் செய்யவும்</span>
+        <span>•</span>
+        <span className="font-medium">Swipe left/right</span>
+        <span className="animate-bounce">→</span>
       </div>
 
       {/* 3. COLLAPSIBLE ADDITIONAL DETAILS (Good times, Obstacles, Soolam) */}
