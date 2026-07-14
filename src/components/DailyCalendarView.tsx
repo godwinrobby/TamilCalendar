@@ -359,15 +359,6 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
         </AnimatePresence>
       </div>
 
-      {/* Swipe Gesture Hint */}
-      <div className="text-center mt-2.5 mb-1.5 text-[10px] md:text-xs font-extrabold text-amber-800/60 select-none flex items-center justify-center space-x-1.5" id="swipe_gesture_hint">
-        <span className="animate-bounce">←</span>
-        <span>தேதியை மாற்ற இடப்புறம் / வலப்புறம் ஸ்வைப் செய்யவும்</span>
-        <span>•</span>
-        <span className="font-medium">Swipe left/right</span>
-        <span className="animate-bounce">→</span>
-      </div>
-
       {/* 3. COLLAPSIBLE ADDITIONAL DETAILS (Good times, Obstacles, Soolam) */}
       <div className="max-w-md md:max-w-lg w-full mx-auto px-4 mt-3" id="more_details_accordion">
         <button
