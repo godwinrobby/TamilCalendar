@@ -29,6 +29,7 @@ export interface TamilDateInfo {
   phaseArrow?: 'up' | 'down';
   isPradosham?: boolean;
   isMaranaYogam?: boolean;
+  specialSymbols?: string;
 }
 
 export interface FestivalInfo {

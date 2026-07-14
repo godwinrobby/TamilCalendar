@@ -4,9 +4,24 @@
  */
 
 import React, { useState } from 'react';
-import { getTamilCalendarInfo, getCurrentISTDateString } from '../utils/tamilCalendar';
+import { getTamilCalendarInfo, getCurrentISTDateString, getRasiPalanForDate, DAILY_RASI_PALAN } from '../utils/tamilCalendar';
 import { Calendar, ChevronLeft, ChevronRight, Award, Flame, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+
+const RASI_SYMBOLS: Record<string, string> = {
+  'மேஷம்': '♈',
+  'ரிஷபம்': '♉',
+  'மிதுனம்': '♊',
+  'கடகம்': '♋',
+  'சிம்மம்': '♌',
+  'கன்னி': '♍',
+  'துலாம்': '♎',
+  'விருச்சிகம்': '♏',
+  'தனுசு': '♐',
+  'மகரம்': '♑',
+  'கும்பம்': '♒',
+  'மீனம்': '♓'
+};
 
 interface DailyCalendarViewProps {
   initialDate?: string;
@@ -19,6 +34,8 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
   );
   const [direction, setDirection] = useState<'left' | 'right'>('right');
   const [isExpanded, setIsExpanded] = useState(false);
+  const [selectedRasi, setSelectedRasi] = useState<string>('மேஷம் (Aries)');
+  const [isRasiExpanded, setIsRasiExpanded] = useState(false);
 
   // Sync with incoming prop changes (e.g. from Page Router hash changes)
   React.useEffect(() => {
@@ -28,6 +45,44 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
   }, [initialDate]);
 
   const calendarInfo = getTamilCalendarInfo(selectedDateStr);
+
+  const getFormattedNakshatram = () => {
+    const nak = calendarInfo.nakshatram || '';
+    let timePrefix = '';
+    if (!nak.includes('இன்று') && !nak.includes('வரை') && !nak.includes('முழுவதும்') && calendarInfo.nakshatramTime) {
+      timePrefix = calendarInfo.nakshatramTime + ' ';
+    }
+    let suffix = '';
+    if (!nak.includes('பின்பு') && calendarInfo.nextNakshatram) {
+      suffix = ' பின்பு ' + calendarInfo.nextNakshatram;
+    }
+    return timePrefix + nak + suffix;
+  };
+
+  const getFormattedThithi = () => {
+    const th = calendarInfo.thithi || '';
+    let timePrefix = '';
+    if (!th.includes('இன்று') && !th.includes('வரை') && !th.includes('முழுவதும்') && calendarInfo.thithiTime) {
+      timePrefix = calendarInfo.thithiTime + ' ';
+    }
+    let suffix = '';
+    if (!th.includes('பின்பு') && calendarInfo.nextThithi) {
+      suffix = ' பின்பு ' + calendarInfo.nextThithi;
+    }
+    return timePrefix + th + suffix;
+  };
+
+  const splitTimeValue = (val: string) => {
+    if (!val) return { period: '', time: '' };
+    const parts = val.trim().split(' ');
+    if (parts.length >= 2) {
+      return {
+        period: parts[0],
+        time: parts.slice(1).join(' ')
+      };
+    }
+    return { period: '', time: val };
+  };
 
   const changeDate = (offset: number) => {
     const currentDate = new Date(selectedDateStr + 'T00:00:00Z');
@@ -163,8 +218,14 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
 
             {/* Top Sheet Header with Special Title centered (Exactly as per image) */}
             <div className="text-center pt-5 pb-3 border-b-2 border-[#8A1A1A] px-4" id="sheet_card_header">
-              <h2 className="text-lg md:text-xl font-extrabold text-[#8A1A1A] tracking-normal" id="main_sheet_title">
-                {mainSheetTitle}
+              <h2 className="text-lg md:text-xl font-extrabold text-[#8A1A1A] tracking-normal flex items-center justify-center gap-2" id="main_sheet_title">
+                {calendarInfo.specialSymbols && (
+                  <span className="text-xl animate-pulse" title="சிறப்புக் குறியீடு">{calendarInfo.specialSymbols}</span>
+                )}
+                <span>{mainSheetTitle}</span>
+                {calendarInfo.specialSymbols && (
+                  <span className="text-xl animate-pulse" title="சிறப்புக் குறியீடு">{calendarInfo.specialSymbols}</span>
+                )}
               </h2>
             </div>
 
@@ -279,75 +340,281 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
               </div>
             </div>
 
-            {/* 4 Detailed Rows with Dividers */}
-            <div className="flex-grow divide-y divide-[#8A1A1A]/10" id="astrology_rows_container">
+            {/* 1. பஞ்சாங்கம் SECTION */}
+            <div className="bg-[#FFFDF6] border-t-2 border-[#8A1A1A]/20" id="section_panchangam_container">
+              <div className="bg-amber-100/55 border-b border-[#8A1A1A]/10 px-4 py-2 flex items-center space-x-2">
+                <span className="text-[#8A1A1A] font-extrabold text-sm">🕉️</span>
+                <h3 className="text-xs font-black uppercase tracking-wider text-[#8A1A1A]">பஞ்சாங்கம்</h3>
+              </div>
               
-              {/* Row 1: நட்சத்திரம் */}
-              <div className="p-4 flex items-start space-x-4 hover:bg-amber-50/10 transition" id="row_nakshatram">
-                <div className="mt-0.5 text-[#8A1A1A]" id="icon_nakshatram">
-                  <svg className="w-7 h-7 stroke-current fill-none" viewBox="0 0 24 24" strokeWidth="1.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499c.195-.49.887-.49 1.08 0l2 4.992a1 1 0 00.751.585l5.4.542c.528.053.74.7.358 1.058l-4.1 3.823a1 1 0 00-.287.885l1.1 5.3c.108.52-.444.921-.903.655l-4.75-2.784a1 1 0 00-.916 0l-4.75 2.784c-.459.266-1.011-.135-.903-.655l1.1-5.3a1 1 0 00-.287-.885L2.378 10.12c-.382-.358-.17-.1-.358-1.058l5.4-.542a1 1 0 00.751-.585l2-4.992z" />
-                  </svg>
+              {/* Festivals if any exist */}
+              {calendarInfo.festivals && calendarInfo.festivals.length > 0 && (
+                <div className="p-4 pb-2 border-b border-[#8A1A1A]/10" id="panchangam_festivals">
+                  <span className="text-[10px] font-black text-amber-800 uppercase tracking-wide">சிறப்பு நாட்கள் / பண்டிகைகள்:</span>
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    {calendarInfo.festivals.map((fest, idx) => (
+                      <span key={idx} className="inline-flex items-center bg-[#8A1A1A]/10 text-[#8A1A1A] border border-[#8A1A1A]/20 px-2.5 py-0.5 rounded-lg text-xs font-bold">
+                        ★ {fest}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-                <div className="leading-relaxed">
-                  <h3 className="text-base font-extrabold text-[#5C1A1A]">நட்சத்திரம்</h3>
-                  <p className="text-xs text-amber-950 font-medium mt-1">
-                    {calendarInfo.nakshatramTime} <span className="font-extrabold text-[#8A1A1A]">{calendarInfo.nakshatram}</span> பின்பு <span className="font-semibold">{calendarInfo.nextNakshatram}</span>
-                  </p>
+              )}
+
+              {/* Detailed Rows with Dividers matching the user-uploaded image layout */}
+              <div className="divide-y divide-[#8A1A1A]/10" id="panchangam_detailed_rows">
+                
+                {/* Row 1: நட்சத்திரம் */}
+                <div className="p-4 flex items-start space-x-4 hover:bg-amber-50/10 transition duration-150" id="row_nakshatram">
+                  <div className="flex-shrink-0 mt-0.5 text-[#8A1A1A] w-7 h-7 flex items-center justify-center">
+                    <svg className="w-6 h-6 stroke-[#8A1A1A] fill-none" viewBox="0 0 24 24" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                    </svg>
+                  </div>
+                  <div className="leading-relaxed">
+                    <h3 className="text-base md:text-lg font-black text-[#8A1A1A]">நட்சத்திரம்</h3>
+                    <p className="text-xs md:text-sm text-amber-950 font-bold mt-1 leading-relaxed">
+                      {getFormattedNakshatram()}
+                    </p>
+                  </div>
                 </div>
+
+                {/* Row 2: திதி */}
+                <div className="p-4 flex items-start space-x-4 hover:bg-amber-50/10 transition duration-150" id="row_thithi">
+                  <div className="flex-shrink-0 mt-0.5 text-[#8A1A1A] w-7 h-7 flex items-center justify-center">
+                    <svg className="w-6 h-6 stroke-[#8A1A1A] fill-none" viewBox="0 0 24 24" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="5" />
+                      <line x1="12" y1="1" x2="12" y2="3" />
+                      <line x1="12" y1="21" x2="12" y2="23" />
+                      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                      <line x1="1" y1="12" x2="3" y2="12" />
+                      <line x1="21" y1="12" x2="23" y2="12" />
+                      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                      <line x1="18.36" y1="5.64" x2="19.78" y2="7.02" />
+                    </svg>
+                  </div>
+                  <div className="leading-relaxed">
+                    <h3 className="text-base md:text-lg font-black text-[#8A1A1A]">திதி</h3>
+                    <p className="text-xs md:text-sm text-amber-950 font-bold mt-1 leading-relaxed">
+                      {getFormattedThithi()}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Row 3: யோகம் */}
+                <div className="p-4 flex items-start space-x-4 hover:bg-amber-50/10 transition duration-150" id="row_yogam">
+                  <div className="flex-shrink-0 mt-0.5 text-[#8A1A1A] w-7 h-7 flex items-center justify-center">
+                    <svg className="w-6 h-6 stroke-[#8A1A1A] fill-none" viewBox="0 0 24 24" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="3" />
+                      <path d="M12 3a3 3 0 0 0-3 3v3a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z" />
+                      <path d="M12 21a3 3 0 0 0 3-3v-3a3 3 0 0 0-6 0v3a3 3 0 0 0 3 3z" />
+                      <path d="M3 12a3 3 0 0 0 3 3h3a3 3 0 0 0 0-6H6a3 3 0 0 0-3 3z" />
+                      <path d="M21 12a3 3 0 0 0-3-3h-3a3 3 0 0 0 0 6h3a3 3 0 0 0 3-3z" />
+                    </svg>
+                  </div>
+                  <div className="leading-relaxed">
+                    <h3 className="text-base md:text-lg font-black text-[#8A1A1A]">யோகம்</h3>
+                    <p className="text-xs md:text-sm text-amber-950 font-bold mt-1 leading-relaxed">
+                      {calendarInfo.yogam}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Row 4: சந்திராஷ்டமம் */}
+                <div className="p-4 flex items-start space-x-4 hover:bg-amber-50/10 transition duration-150" id="row_chandrashtamam">
+                  <div className="flex-shrink-0 mt-0.5 text-[#8A1A1A] w-7 h-7 flex items-center justify-center">
+                    <svg className="w-6 h-6 stroke-[#8A1A1A] fill-none" viewBox="0 0 24 24" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5 5 0 0 1-7.54-7.54C12.92 3.04 12.46 3 12 3Z" />
+                    </svg>
+                  </div>
+                  <div className="leading-relaxed">
+                    <h3 className="text-base md:text-lg font-black text-[#8A1A1A]">சந்திராஷ்டமம்</h3>
+                    <p className="text-xs md:text-sm text-amber-950 font-bold mt-1 leading-relaxed">
+                      {calendarInfo.chandrashtamam}
+                    </p>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* 2 & 3. நல்ல நேரம் & கௌரி நல்ல நேரம் SECTION */}
+            <div className="bg-[#FFFDF9] border-t-2 border-dashed border-[#8A1A1A]/15" id="section_nalla_neram_container">
+              <div className="bg-[#E6F4EA] border-b border-[#8A1A1A]/10 px-4 py-2 flex items-center space-x-2">
+                <span className="text-[#137333] font-black text-sm">•</span>
+                <h3 className="text-xs font-black uppercase tracking-wider text-[#137333]">நல்ல நேரம் & கௌரி நல்ல நேரம்</h3>
+              </div>
+              
+              {(() => {
+                const nm = splitTimeValue(calendarInfo.nallaNeram.morning || 'காலை 07:30 - 09:00');
+                const ne = splitTimeValue(calendarInfo.nallaNeram.evening || 'மாலை 04:30 - 06:00');
+                const gnm = splitTimeValue(calendarInfo.gowriNallaNeram.morning || 'காலை 10:30 - 12:00');
+                const gne = splitTimeValue(calendarInfo.gowriNallaNeram.evening || 'மாலை 07:30 - 09:00');
+
+                return (
+                  <div className="p-4 grid grid-cols-2 gap-3" id="timing_grids">
+                    {/* நல்ல நேரம் */}
+                    <div className="bg-white border border-[#A3E635]/30 rounded-2xl p-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)] flex flex-col" id="box_nalla_neram">
+                      <div className="text-center mb-2 pb-1.5 border-b border-[#E2E8F0]">
+                        <span className="text-[#0D9488] font-black text-xs md:text-sm">நல்ல நேரம்</span>
+                      </div>
+                      <div className="space-y-2 text-xs flex-grow flex flex-col justify-center">
+                        <div className="flex justify-between items-center">
+                          <span className="text-[#475569] font-bold">காலை:</span>
+                          <div className="text-right leading-tight">
+                            <span className="text-[#8A1A1A] font-black text-[11px] block">{nm.period}</span>
+                            <span className="text-[#8A1A1A] font-black text-xs">{nm.time}</span>
+                          </div>
+                        </div>
+                        <div className="flex justify-between items-center border-t border-[#F1F5F9] pt-2">
+                          <span className="text-[#475569] font-bold">மாலை:</span>
+                          <div className="text-right leading-tight">
+                            <span className="text-[#8A1A1A] font-black text-[11px] block">{ne.period}</span>
+                            <span className="text-[#8A1A1A] font-black text-xs">{ne.time}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* கௌரி நல்ல நேரம் */}
+                    <div className="bg-white border border-[#A3E635]/30 rounded-2xl p-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)] flex flex-col" id="box_gowri_nalla_neram">
+                      <div className="text-center mb-2 pb-1.5 border-b border-[#E2E8F0]">
+                        <span className="text-[#0D9488] font-black text-xs md:text-sm">கௌரி நல்ல நேரம்</span>
+                      </div>
+                      <div className="space-y-2 text-xs flex-grow flex flex-col justify-center">
+                        <div className="flex justify-between items-center">
+                          <span className="text-[#475569] font-bold">காலை:</span>
+                          <div className="text-right leading-tight">
+                            <span className="text-[#8A1A1A] font-black text-[11px] block">{gnm.period}</span>
+                            <span className="text-[#8A1A1A] font-black text-xs">{gnm.time}</span>
+                          </div>
+                        </div>
+                        <div className="flex justify-between items-center border-t border-[#F1F5F9] pt-2">
+                          <span className="text-[#475569] font-bold">மாலை:</span>
+                          <div className="text-right leading-tight">
+                            <span className="text-[#8A1A1A] font-black text-[11px] block">{gne.period}</span>
+                            <span className="text-[#8A1A1A] font-black text-xs">{gne.time}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* 4. ராகுகாலம் , எமகண்டம் , குளிகை & சூலம் SECTION */}
+            <div className="bg-[#FFFDF9] border-t-2 border-dashed border-[#8A1A1A]/15" id="section_obstacles_container">
+              <div className="bg-[#FCE8E6] border-b border-[#8A1A1A]/10 px-4 py-2 flex items-center space-x-2">
+                <span className="text-[#C5221F] font-black text-sm">•</span>
+                <h3 className="text-xs font-black uppercase tracking-wider text-[#C5221F]">ராகுகாலம் , எமகண்டம் , குளிகை</h3>
+              </div>
+              
+              {(() => {
+                const rk = splitTimeValue(calendarInfo.raghuKalam || 'மாலை 03:00 - 04:30');
+                const yg = splitTimeValue(calendarInfo.yamagandam || 'காலை 09:00 - 10:30');
+                const kg = splitTimeValue(calendarInfo.kuligai || 'பகல் 12:00 - 01:30');
+
+                return (
+                  <div className="p-4 space-y-4" id="obstacles_details">
+                    <div className="grid grid-cols-3 gap-2 text-center" id="bad_timings_grid">
+                      
+                      {/* ராகுகாலம் */}
+                      <div className="bg-[#FDF2F2] border border-[#FEE2E2] rounded-2xl p-2 flex flex-col justify-between h-[90px]">
+                        <span className="text-[#991B1B] font-extrabold text-[11px]">ராகுகாலம்:</span>
+                        <div className="leading-tight mb-1">
+                          <span className="text-slate-800 font-black text-xs block">{rk.period}</span>
+                          <span className="text-slate-800 font-black text-[10px] block">{rk.time}</span>
+                        </div>
+                      </div>
+
+                      {/* எமகண்டம் */}
+                      <div className="bg-[#FDF2F2] border border-[#FEE2E2] rounded-2xl p-2 flex flex-col justify-between h-[90px]">
+                        <span className="text-[#991B1B] font-extrabold text-[11px]">எமகண்டம்:</span>
+                        <div className="leading-tight mb-1">
+                          <span className="text-slate-800 font-black text-xs block">{yg.period}</span>
+                          <span className="text-slate-800 font-black text-[10px] block">{yg.time}</span>
+                        </div>
+                      </div>
+
+                      {/* குளிகை */}
+                      <div className="bg-[#FDF2F2] border border-[#FEE2E2] rounded-2xl p-2 flex flex-col justify-between h-[90px]">
+                        <span className="text-[#991B1B] font-extrabold text-[11px]">குளிகை:</span>
+                        <div className="leading-tight mb-1">
+                          <span className="text-slate-800 font-black text-xs block">{kg.period}</span>
+                          <span className="text-slate-800 font-black text-[10px] block">{kg.time}</span>
+                        </div>
+                      </div>
+
+                    </div>
+
+                    {/* சூலம் & பரிகாரம் */}
+                    <div className="bg-[#FEFCE8] border border-[#FEF08A]/50 rounded-2xl p-3" id="soolam_box">
+                      <div className="grid grid-cols-2 gap-3 text-xs font-bold">
+                        <div className="flex justify-center items-center bg-white border border-[#FDE047] px-2 py-2 rounded-xl">
+                          <span className="text-[#D97706] font-black text-xs">சூலம்:</span>
+                          <strong className="text-[#1E3A8A] font-black text-sm ml-2">{calendarInfo.soolam || 'வடக்கு'}</strong>
+                        </div>
+                        <div className="flex justify-center items-center bg-white border border-[#FDE047] px-2 py-2 rounded-xl">
+                          <span className="text-[#D97706] font-black text-xs">பரிகாரம்:</span>
+                          <strong className="text-[#1E3A8A] font-black text-sm ml-2">{calendarInfo.parigaram || 'பால்'}</strong>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* 5. இன்றைய ராசிபலன் SECTION */}
+            <div className="bg-[#FFFDF9] border-t-2 border-dashed border-[#8A1A1A]/15 pb-4" id="section_rasi_palan_container">
+              <div className="bg-amber-50/55 border-b border-[#8A1A1A]/10 px-4 py-2 flex items-center space-x-2">
+                <span className="text-amber-800 font-extrabold text-sm">☸️</span>
+                <h3 className="text-xs font-black uppercase tracking-wider text-amber-900">இன்றைய ராசிபலன்</h3>
               </div>
 
-              {/* Row 2: திதி */}
-              <div className="p-4 flex items-start space-x-4 hover:bg-amber-50/10 transition" id="row_thithi">
-                <div className="mt-0.5 text-[#8A1A1A]" id="icon_thithi">
-                  <svg className="w-7 h-7 stroke-current fill-none" viewBox="0 0 24 24" strokeWidth="1.5">
-                    <circle cx="12" cy="12" r="5" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-                    <circle cx="9" cy="12" r="4" strokeWidth="1" strokeDasharray="1,1" />
-                  </svg>
-                </div>
-                <div className="leading-relaxed">
-                  <h3 className="text-base font-extrabold text-[#5C1A1A]">திதி</h3>
-                  <p className="text-xs text-amber-950 font-medium mt-1">
-                    {calendarInfo.thithiTime} <span className="font-extrabold text-[#8A1A1A]">{calendarInfo.thithi.split(' ')[1] || calendarInfo.thithi}</span> பின்பு <span className="font-semibold">{calendarInfo.nextThithi}</span>
-                  </p>
-                </div>
-              </div>
+              <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3" id="rasi_predictions_grid">
+                {Object.keys(DAILY_RASI_PALAN).map((r) => {
+                  const rasiData = getRasiPalanForDate(selectedDateStr, r);
+                  const rasiName = rasiData.rasi;
+                  const emojiSymbol = RASI_SYMBOLS[rasiName] || '☸️';
 
-              {/* Row 3: யோகம் */}
-              <div className="p-4 flex items-start space-x-4 hover:bg-amber-50/10 transition" id="row_yogam">
-                <div className="mt-0.5 text-[#8A1A1A]" id="icon_yogam">
-                  <svg className="w-7 h-7 stroke-current fill-none" viewBox="0 0 24 24" strokeWidth="1.5">
-                    <circle cx="8" cy="12" r="3" />
-                    <circle cx="16" cy="12" r="3" />
-                    <circle cx="12" cy="8" r="3" />
-                    <circle cx="12" cy="16" r="3" />
-                  </svg>
-                </div>
-                <div className="leading-relaxed">
-                  <h3 className="text-base font-extrabold text-[#5C1A1A]">யோகம்</h3>
-                  <p className="text-xs text-amber-950 font-bold mt-1 text-[#8A1A1A]">
-                    {calendarInfo.yogam.split(' ')[0]}
-                  </p>
-                </div>
-              </div>
+                  const getStatusBadge = (status: string) => {
+                    if (status === 'Excellent') {
+                      return <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] font-bold px-1.5 py-0.5 rounded-full">மிகச் சிறப்பு</span>;
+                    } else if (status === 'Good') {
+                      return <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[9px] font-bold px-1.5 py-0.5 rounded-full">நன்று</span>;
+                    }
+                    return <span className="bg-amber-50 text-amber-700 border border-amber-200 text-[9px] font-bold px-1.5 py-0.5 rounded-full">சாதாரண நாள்</span>;
+                  };
 
-              {/* Row 4: சந்திராஷ்டமம் */}
-              <div className="p-4 flex items-start space-x-4 hover:bg-amber-50/10 transition" id="row_chandrashtamam">
-                <div className="mt-0.5 text-[#8A1A1A]" id="icon_chandrashtamam">
-                  <svg className="w-7 h-7 stroke-current fill-none" viewBox="0 0 24 24" strokeWidth="1.5">
-                    <path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5 5 0 0 1-7.54-7.54C12.92 3.04 12.46 3 12 3Z" />
-                    <path d="M16 4.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" />
-                  </svg>
-                </div>
-                <div className="leading-relaxed">
-                  <h3 className="text-base font-extrabold text-[#5C1A1A]">சந்திராஷ்டமம்</h3>
-                  <p className="text-xs text-amber-950 font-bold mt-1">
-                    {calendarInfo.chandrashtamam}
-                  </p>
-                </div>
-              </div>
+                  const getRatingStars = (rating: number) => {
+                    return [...Array(5)].map((_, i) => (
+                      <span key={i} className={`text-[10px] ${i < rating ? 'text-amber-500' : 'text-gray-200'}`}>★</span>
+                    ));
+                  };
 
+                  return (
+                    <div key={r} className="bg-white border border-amber-100/80 rounded-xl p-3 shadow-sm hover:shadow-md transition duration-200 space-y-1.5 flex flex-col justify-between" id={`rasi_card_${rasiName}`}>
+                      <div className="flex items-center justify-between border-b border-amber-50/50 pb-1">
+                        <div className="flex items-center space-x-1.5">
+                          <span className="text-sm">{emojiSymbol}</span>
+                          <span className="font-extrabold text-xs text-[#8A1A1A]">{rasiName}</span>
+                        </div>
+                        {getStatusBadge(rasiData.status)}
+                      </div>
+                      <p className="text-[11px] text-[#5C1A1A] font-medium leading-relaxed flex-grow">
+                        {rasiData.prediction}
+                      </p>
+                      <div className="flex items-center justify-between pt-1 border-t border-dashed border-amber-50">
+                        <span className="text-[9px] text-amber-800/80 font-bold">இன்றைய பலன்:</span>
+                        <div className="flex">{getRatingStars(rasiData.rating)}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Subtle calendar info footer of the sheet */}
@@ -356,109 +623,6 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
               <span className="font-mono">{engDay} {getEngMonthInTamil(selectedDateStr)} {engYear} • {calendarInfo.dayOfWeek}</span>
             </div>
           </motion.div>
-        </AnimatePresence>
-      </div>
-
-      {/* 3. COLLAPSIBLE ADDITIONAL DETAILS (Good times, Obstacles, Soolam) */}
-      <div className="max-w-md md:max-w-lg w-full mx-auto px-4 mt-3" id="more_details_accordion">
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full flex items-center justify-between bg-amber-100/40 hover:bg-amber-100/60 transition p-3 rounded-xl border border-amber-200 text-xs font-extrabold text-[#8A1A1A] cursor-pointer shadow-sm"
-          id="btn_toggle_details"
-        >
-          <div className="flex items-center space-x-2">
-            <span className="text-sm">📅</span>
-            <span>கூடுதல் பஞ்சாங்க விவரங்கள்</span>
-          </div>
-          <motion.div
-            animate={{ rotate: isExpanded ? 90 : 0 }}
-            transition={{ duration: 0.15 }}
-          >
-            <ChevronRight className="w-4 h-4 text-[#8A1A1A]" />
-          </motion.div>
-        </button>
-
-        <AnimatePresence>
-          {isExpanded && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="overflow-hidden mt-2 bg-white border border-amber-200/80 rounded-xl p-3 space-y-3 shadow-sm text-xs"
-              id="expanded_panchangam_details"
-            >
-              {/* Auspicious Day Badge */}
-              <div className="flex justify-center">
-                {calendarInfo.isAuspicious ? (
-                  <div className="inline-flex items-center space-x-1.5 bg-emerald-100 text-emerald-800 border border-emerald-300 px-3 py-1 rounded-full text-xs font-extrabold shadow-sm">
-                    <Award className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>சுப முகூர்த்த நாள்</span>
-                  </div>
-                ) : (
-                  <div className="inline-flex items-center space-x-1.5 bg-amber-50 text-amber-800 border border-amber-200 px-3 py-1 rounded-full text-xs font-bold shadow-sm">
-                    <span>சாதாரண நாள்</span>
-                  </div>
-                )}
-              </div>
-
-              {/* 1. Good Timings (Nalla Neram & Gowri) */}
-              <div className="bg-emerald-500/5 border border-emerald-600/20 rounded-xl p-2.5 text-xs">
-                <h4 className="font-bold text-emerald-800 uppercase text-[10px] tracking-wider mb-1 flex items-center space-x-1">
-                  <span className="w-1.5 h-1.5 bg-emerald-600 rounded-full"></span>
-                  <span>நல்ல நேரம் & கௌரி நல்ல நேரம்</span>
-                </h4>
-                <div className="grid grid-cols-2 gap-2 text-[11px] font-bold text-emerald-950">
-                  <div>
-                    <span className="text-emerald-700 font-medium block text-[9px]">நல்ல நேரம்:</span>
-                    <p>{calendarInfo.nallaNeram.morning || '---'}</p>
-                    <p>{calendarInfo.nallaNeram.evening || '---'}</p>
-                  </div>
-                  <div>
-                    <span className="text-emerald-700 font-medium block text-[9px]">கௌரி நல்ல நேரம்:</span>
-                    <p>{calendarInfo.gowriNallaNeram.morning || '---'}</p>
-                    <p>{calendarInfo.gowriNallaNeram.evening || '---'}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* 2. Obstacles / Unfavorable Timings (Raghu, Yama, Kuligai) */}
-              <div className="bg-red-500/5 border border-red-600/20 rounded-xl p-2.5 text-xs">
-                <h4 className="font-bold text-red-800 uppercase text-[10px] tracking-wider mb-1 flex items-center space-x-1">
-                  <span className="w-1.5 h-1.5 bg-red-600 rounded-full"></span>
-                  <span>ராகு, எமகண்டம், குளிகை</span>
-                </h4>
-                <div className="grid grid-cols-3 gap-1.5 text-[10px] font-bold text-red-950">
-                  <div>
-                    <span className="text-red-700 block font-medium text-[8px]">ராகு காலம்:</span>
-                    <p className="leading-tight mt-0.5">{calendarInfo.raghuKalam}</p>
-                  </div>
-                  <div>
-                    <span className="text-red-700 block font-medium text-[8px]">எமகண்டம்:</span>
-                    <p className="leading-tight mt-0.5">{calendarInfo.yamagandam}</p>
-                  </div>
-                  <div>
-                    <span className="text-red-700 block font-medium text-[8px]">குளிகை:</span>
-                    <p className="leading-tight mt-0.5">{calendarInfo.kuligai}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* 3. Soolam & Parigaram */}
-              <div className="bg-amber-500/5 border border-amber-600/25 rounded-xl p-2.5 text-xs">
-                <div className="grid grid-cols-2 gap-2 text-[10px] font-bold">
-                  <div>
-                    <span className="text-amber-800 block font-medium text-[8px]">சூலம்:</span>
-                    <p className="text-red-900 font-extrabold">{calendarInfo.soolam}</p>
-                  </div>
-                  <div>
-                    <span className="text-amber-800 block font-medium text-[8px]">பரிகாரம்:</span>
-                    <p className="text-red-900 font-extrabold">{calendarInfo.parigaram}</p>
-                  </div>
-                </div>
-              </div>
-
-            </motion.div>
-          )}
         </AnimatePresence>
       </div>
 

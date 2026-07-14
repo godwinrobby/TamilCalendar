@@ -66,6 +66,7 @@ export default function App() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [isQuoteOpen, setIsQuoteOpen] = useState(false);
+  const [dbSynced, setDbSynced] = useState(false);
 
   // Sync state with hash change
   React.useEffect(() => {
@@ -85,6 +86,22 @@ export default function App() {
     return () => {
       window.removeEventListener('hashchange', handleHashChange);
     };
+  }, []);
+
+  // Fetch latest database overrides from server MySQL API on mount
+  React.useEffect(() => {
+    fetch('/api/calendar')
+      .then(res => res.json())
+      .then(result => {
+        if (result.success && result.data) {
+          // Sync with local storage cache so all synchronous helpers can read it
+          localStorage.setItem('mysql_table_tamil_calendar', JSON.stringify(result.data));
+          setDbSynced(true);
+        }
+      })
+      .catch(err => {
+        console.error('Error synchronizing database from server API:', err);
+      });
   }, []);
 
   // Router-based navigation helper

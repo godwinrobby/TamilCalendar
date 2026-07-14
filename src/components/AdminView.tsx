@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   ChevronLeft, 
   Lock, 
@@ -122,6 +122,21 @@ export default function AdminView({ onClose }: AdminViewProps) {
   // Data State
   const [records, setRecords] = useState<Record<string, any>>(getImportedRecordsMap());
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Sync on initialization with MySQL server-side API
+  useEffect(() => {
+    fetch('/api/calendar')
+      .then(res => res.json())
+      .then(result => {
+        if (result.success && result.data) {
+          setRecords(result.data);
+          saveImportedRecordsMap(result.data);
+        }
+      })
+      .catch(err => {
+        console.error('Error fetching calendar records from server:', err);
+      });
+  }, []);
   
   // Raw SQL Query State
   const [sqlQuery, setSqlQuery] = useState('SELECT * FROM tamil_calendar WHERE date = \'2026-07-14\'');
@@ -226,6 +241,15 @@ export default function AdminView({ onClose }: AdminViewProps) {
 
       saveImportedRecordsMap(parsedRecordsMap);
       setRecords(parsedRecordsMap);
+
+      // Save to server-side MySQL database via API
+      fetch('/api/calendar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ records: parsedRecordsMap })
+      })
+      .catch(err => console.error('Error saving records to server API:', err));
+
       setImportStatus({ 
         success: true, 
         message: `${importCount} நாட்கள் வெற்றிகரமாக MySQL அட்டவணையில் பதிவேற்றப்பட்டு புதுப்பிக்கப்பட்டது! (${importCount} rows successfully updated in MySQL table!)` 
@@ -295,12 +319,26 @@ export default function AdminView({ onClose }: AdminViewProps) {
     delete updated[dateKey];
     saveImportedRecordsMap(updated);
     setRecords(updated);
+
+    // Delete on server-side via API
+    fetch(`/api/calendar/${dateKey}`, {
+      method: 'DELETE'
+    })
+    .catch(err => console.error('Error deleting record from server API:', err));
   };
 
   const handleClearAll = () => {
     if (window.confirm('அனைத்து தரவுகளையும் அழிக்க வேண்டுமா? (Are you sure you want to delete all overridden records?)')) {
       saveImportedRecordsMap({});
       setRecords({});
+
+      // Clear on server-side via API
+      fetch('/api/calendar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ records: {} })
+      })
+      .catch(err => console.error('Error clearing records on server API:', err));
     }
   };
 

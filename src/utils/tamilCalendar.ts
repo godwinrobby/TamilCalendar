@@ -234,57 +234,10 @@ export function getTamilCalendarInfo(dateInput: Date | string): TamilDateInfo {
   const weekdayIndex = date.getUTCDay();
   const dayOfWeek = TAMIL_WEEKDAYS[weekdayIndex];
 
+  // 1. Dynamic Calculations (to be used as robust fallbacks)
   const { month: tamilMonth, day: tamilDay, year: tamilYear } = getTamilMonthAndDay(date);
   const { name: thithi, index: thithiIdx } = getThithiForDate(date);
   const { name: nakshatram, index: nakIdx } = getNakshatramForDate(date);
-
-  // Check if there is an imported MySQL record for this date
-  const records = getImportedRecordsMap();
-  const dbRecord = records[engStr];
-
-  if (dbRecord) {
-    const rawFestivals = dbRecord.specialToday || '';
-    const parsedFestivals = rawFestivals
-      .split(/[,;\n]+/)
-      .map((f: string) => f.trim())
-      .filter((f: string) => f.length > 0);
-
-    const isAuspicious = (dbRecord.yogam || '') !== 'மரண யோகம்';
-
-    return {
-      englishDate: engStr,
-      tamilYear: dbRecord.tamilYear || tamilYear,
-      tamilMonth: dbRecord.tamilMonth || tamilMonth,
-      tamilDay: parseInt(dbRecord.tamilDay) || tamilDay,
-      dayOfWeek: dbRecord.dayOfWeekTamil || dayOfWeek,
-      thithi: dbRecord.thithi || thithi,
-      nakshatram: dbRecord.nakshatram || nakshatram,
-      yogam: dbRecord.yogam || 'சித்த யோகம்',
-      nallaNeram: {
-        morning: dbRecord.nallaNeramMorning || 'காலை 09:00 - 10:30',
-        evening: dbRecord.nallaNeramEvening || 'மாலை 04:30 - 06:00',
-      },
-      gowriNallaNeram: {
-        morning: dbRecord.gowriMorning || 'காலை 12:00 - 01:30',
-        evening: dbRecord.gowriEvening || 'மாலை 06:00 - 07:30',
-      },
-      raghuKalam: dbRecord.raghuKalam || 'காலை 10:30 - 12:00',
-      yamagandam: dbRecord.yamagandam || 'பகல் 01:30 - 03:00',
-      kuligai: dbRecord.kuligai || 'காலை 07:30 - 09:00',
-      soolam: dbRecord.soolam || 'வடக்கு',
-      parigaram: 'தயிர்',
-      isAuspicious,
-      festivals: parsedFestivals,
-      nextNakshatram: NAKSHATRAMS[(nakIdx + 1) % 27],
-      nextThithi: THITHIS[thithiIdx % 30],
-      chandrashtamam: dbRecord.chandrashtamam || 'விசாகம்',
-      nakshatramTime: 'இன்று முழுவதும்',
-      thithiTime: 'இன்று முழுவதும்',
-      phaseArrow: thithiIdx <= 15 ? 'up' : 'down',
-      isPradosham: thithiIdx === 13 || thithiIdx === 28,
-      isMaranaYogam: (dbRecord.yogam || '') === 'மரண யோகம்',
-    };
-  }
 
   // Traditional yogam based on Day + Nakshatram index
   const yogamIdx = (weekdayIndex + nakIdx) % 3;
@@ -366,31 +319,122 @@ export function getTamilCalendarInfo(dateInput: Date | string): TamilDateInfo {
   if (thithiIdx === 19) festivalsFound.push('சங்கடஹர சதுர்த்தி (Sankatahara Chaturthi)');
   if (nakIdx === 2) festivalsFound.push('கார்த்திகை தீபம் / விரதம்');
 
-  // Auspicious day logic: general rule of thumb: days with Siddha/Amrita and not Marana Yogam, and not certain unfavorable Thithis
-  const isAuspicious = yogam !== 'மரண யோகம்' && ![8, 9, 23, 24].includes(thithiIdx); // Avoid Ashtami, Navami
-
-  // High-fidelity astrological details
+  // Next nakshatram and thithi
   const nextNakshatram = NAKSHATRAMS[(nakIdx + 1) % 27];
   const nextThithiVal = THITHIS[thithiIdx % 30];
   const nextThithi = nextThithiVal.split(' ')[1] || nextThithiVal;
 
-  // Deterministic but highly realistic times for star and thithi transitions
+  // Star and thithi times
   const nakHour = 8 + (tamilDay % 4);
   const nakMin = (tamilDay * 7) % 60;
   const nakPeriod = nakHour >= 12 ? (nakHour >= 16 ? 'இரவு' : 'மதியம்') : 'காலை';
   const formattedNakHour = nakHour > 12 ? nakHour - 12 : nakHour;
-  const nakshatramTime = `இன்று ${nakPeriod} ${String(formattedNakHour).padStart(2, '0')}:${String(nakMin).padStart(2, '0')} வரை`;
+  const dynamicNakshatramTime = `இன்று ${nakPeriod} ${String(formattedNakHour).padStart(2, '0')}:${String(nakMin).padStart(2, '0')} வரை`;
 
   const thithiHour = 7 + ((tamilDay + 3) % 5);
   const thithiMin = (tamilDay * 13) % 60;
   const thithiPeriod = thithiHour >= 12 ? (thithiHour >= 16 ? 'இரவு' : 'மதியம்') : 'காலை';
   const formattedThithiHour = thithiHour > 12 ? thithiHour - 12 : thithiHour;
-  const thithiTime = `இன்று ${thithiPeriod} ${String(formattedThithiHour).padStart(2, '0')}:${String(thithiMin).padStart(2, '0')} வரை`;
+  const dynamicThithiTime = `இன்று ${thithiPeriod} ${String(formattedThithiHour).padStart(2, '0')}:${String(thithiMin).padStart(2, '0')} வரை`;
 
-  const chandrashtamam = [NAKSHATRAMS[(nakIdx + 16) % 27], NAKSHATRAMS[(nakIdx + 17) % 27]].join(', ');
+  const dynamicChandrashtamam = [NAKSHATRAMS[(nakIdx + 16) % 27], NAKSHATRAMS[(nakIdx + 17) % 27]].join(', ');
   const phaseArrow = thithiIdx <= 15 ? 'up' : 'down';
   const isPradosham = thithiIdx === 13 || thithiIdx === 28;
-  const isMaranaYogam = yogam === 'மரண யோகம்';
+
+  // 2. Check if there is an imported MySQL/CSV record for this date
+  const records = getImportedRecordsMap();
+  const dbRecord = records[engStr];
+
+  if (dbRecord) {
+    const rawFestivals = dbRecord.specialToday || '';
+    const parsedFestivals = rawFestivals
+      .split(/[,;\n]+/)
+      .map((f: string) => f.trim())
+      .filter((f: string) => f.length > 0);
+
+    const mergedFestivals = parsedFestivals.length > 0 ? parsedFestivals : festivalsFound;
+
+    const finalYogam = dbRecord.yogam || yogam || 'சித்த யோகம்';
+    const isAuspicious = finalYogam !== 'மரண யோகம்';
+
+    let customSoolam = dbRecord.soolam || soolamMap[weekdayIndex].direction;
+    let customParigaram = soolamMap[weekdayIndex].remedy;
+    if (customSoolam && customSoolam.includes('(')) {
+      const parts = customSoolam.split('(');
+      customSoolam = parts[0].trim();
+      customParigaram = parts[1].replace(')', '').trim();
+    } else if (customSoolam) {
+      const defaultRemedies: Record<string, string> = {
+        'கிழக்கு': 'தயிர்',
+        'மேற்கு': 'வெல்லம்',
+        'வடக்கு': 'பால்',
+        'தெற்கு': 'எண்ணெய்',
+        'East': 'Curd',
+        'West': 'Jaggery',
+        'North': 'Milk',
+        'South': 'Oil'
+      };
+      customParigaram = defaultRemedies[customSoolam] || customParigaram;
+    }
+
+    // Merge Nalla Neram
+    let dbNallaNeramMorning = dbRecord.nallaNeramMorning;
+    let dbNallaNeramEvening = dbRecord.nallaNeramEvening;
+    if (!dbNallaNeramMorning) {
+      dbNallaNeramMorning = nallaNeramMap[weekdayIndex].morning;
+    }
+    if (!dbNallaNeramEvening) {
+      dbNallaNeramEvening = nallaNeramMap[weekdayIndex].evening;
+    }
+
+    // Merge Gowri Nalla Neram
+    let dbGowriMorning = dbRecord.gowriMorning;
+    let dbGowriEvening = dbRecord.gowriEvening;
+    if (!dbGowriMorning) {
+      dbGowriMorning = gowriNallaNeramMap[weekdayIndex].morning;
+    }
+    if (!dbGowriEvening) {
+      dbGowriEvening = gowriNallaNeramMap[weekdayIndex].evening;
+    }
+
+    return {
+      englishDate: engStr,
+      tamilYear: dbRecord.tamilYear || tamilYear,
+      tamilMonth: dbRecord.tamilMonth || tamilMonth,
+      tamilDay: parseInt(dbRecord.tamilDay) || tamilDay,
+      dayOfWeek: dbRecord.dayOfWeekTamil || dayOfWeek,
+      thithi: dbRecord.thithi || thithi,
+      nakshatram: dbRecord.nakshatram || nakshatram,
+      yogam: finalYogam,
+      nallaNeram: {
+        morning: dbNallaNeramMorning,
+        evening: dbNallaNeramEvening,
+      },
+      gowriNallaNeram: {
+        morning: dbGowriMorning,
+        evening: dbGowriEvening,
+      },
+      raghuKalam: dbRecord.raghuKalam || raghuMap[weekdayIndex],
+      yamagandam: dbRecord.yamagandam || yamaMap[weekdayIndex],
+      kuligai: dbRecord.kuligai || kuligaiMap[weekdayIndex],
+      soolam: customSoolam,
+      parigaram: customParigaram,
+      isAuspicious,
+      festivals: mergedFestivals,
+      nextNakshatram: NAKSHATRAMS[(nakIdx + 1) % 27],
+      nextThithi: THITHIS[thithiIdx % 30],
+      chandrashtamam: dbRecord.chandrashtamam || dynamicChandrashtamam,
+      nakshatramTime: dbRecord.nakshatramTime || dynamicNakshatramTime,
+      thithiTime: dbRecord.thithiTime || dynamicThithiTime,
+      phaseArrow,
+      isPradosham: isPradosham,
+      isMaranaYogam: finalYogam === 'மரண யோகம்',
+      specialSymbols: dbRecord.specialSymbols || '',
+    };
+  }
+
+  // 3. Complete Dynamic Fallback when no CSV/database record is available
+  const isAuspiciousDay = yogam !== 'மரண யோகம்' && ![8, 9, 23, 24].includes(thithiIdx);
 
   return {
     englishDate: engStr,
@@ -408,16 +452,17 @@ export function getTamilCalendarInfo(dateInput: Date | string): TamilDateInfo {
     kuligai: kuligaiMap[weekdayIndex],
     soolam: soolamMap[weekdayIndex].direction,
     parigaram: soolamMap[weekdayIndex].remedy,
-    isAuspicious,
+    isAuspicious: isAuspiciousDay,
     festivals: festivalsFound,
     nextNakshatram,
     nextThithi,
-    chandrashtamam,
-    nakshatramTime,
-    thithiTime,
+    chandrashtamam: dynamicChandrashtamam,
+    nakshatramTime: dynamicNakshatramTime,
+    thithiTime: dynamicThithiTime,
     phaseArrow,
     isPradosham,
-    isMaranaYogam,
+    isMaranaYogam: yogam === 'மரண யோகம்',
+    specialSymbols: '',
   };
 }
 
@@ -733,8 +778,56 @@ export const DAILY_RASI_PALAN: Record<string, { rasi: string; status: 'Excellent
 export function getImportedRecordsMap(): Record<string, any> {
   if (typeof window === 'undefined') return {};
   try {
-    const data = localStorage.getItem('mysql_table_tamil_calendar');
-    return data ? JSON.parse(data) : {};
+    let data = localStorage.getItem('mysql_table_tamil_calendar');
+    if (data && (data.includes('MySQL override') || data.includes('MySQL database override'))) {
+      localStorage.removeItem('mysql_table_tamil_calendar');
+      data = null;
+    }
+    if (!data) {
+      // Seed the simulated MySQL database on first load with July 14th, 2026 data.
+      // This ensures that July 14th values are called from the MySQL table overrides 1st.
+      const seedData: Record<string, any> = {
+        '2026-07-14': {
+          englishDate: '2026-07-14',
+          englishDay: 'Tuesday',
+          dateEng: '14',
+          dayOfWeekTamil: 'செவ்வாய்',
+          monthTamilLetter: 'ஜூலை',
+          tamilDay: '30',
+          tamilMonth: 'ஆனி',
+          tamilYear: 'பராபவ',
+          specialToday: 'அமாவாசை விரதம், மங்களகரமான நாள்',
+          specialSymbols: '🕉',
+          nakshatram: 'புனர்பூசம்',
+          thithi: 'அமாவாசை',
+          yogam: 'சித்த யோகம்',
+          chandrashtamam: 'கேட்டை',
+          nallaNeramMorning: 'காலை 07:30 - 09:00',
+          nallaNeramEvening: 'மாலை 04:30 - 06:00',
+          gowriMorning: 'காலை 10:30 - 12:00',
+          gowriEvening: 'மாலை 01:30 - 03:00',
+          raghuKalam: 'மாலை 03:00 - 04:30',
+          yamagandam: 'காலை 09:00 - 10:30',
+          kuligai: 'பகல் 12:00 - 01:30',
+          soolam: 'வடக்கு (வெல்லம்)',
+          'மேஷம்': 'இன்று தொட்ட காரியங்கள் துலங்கும்.',
+          'ரிஷபம்': 'பணிச்சுமை குறையும்.',
+          'மிதுனம்': 'நீண்ட நாள் கனவு நனவாகும்.',
+          'கடகம்': 'வார்த்தைகளில் நிதானம் தேவை.',
+          'சிம்மம்': 'தொழிலில் அபரிமிதமான வளர்ச்சி.',
+          'கன்னி': 'மாணவர்கள் கல்வியில் சாதனை படைப்பீர்கள்.',
+          'துலாம்': 'புதிய முயற்சிகள் நல்ல வெற்றியைத் தரும்.',
+          'விருச்சிகம்': 'முக்கிய முடிவுகளை தள்ளிப்போடவும்.',
+          'தனுசு': 'உங்களின் தன்னம்பிக்கை அதிகரிக்கும்.',
+          'மகரம்': 'பொருளாதார வளம் சிறக்கும்.',
+          'கும்பம்': 'தடைபட்ட காரியங்கள் அனைத்தும் சுமுகமாக முடியும்.',
+          'மீனம்': 'உணவு விஷயத்தில் கவனம் தேவை.'
+        }
+      };
+      localStorage.setItem('mysql_table_tamil_calendar', JSON.stringify(seedData));
+      return seedData;
+    }
+    return JSON.parse(data);
   } catch (e) {
     console.error('Error reading mysql_table_tamil_calendar', e);
     return {};
