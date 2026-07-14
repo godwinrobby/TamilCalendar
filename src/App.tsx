@@ -128,7 +128,7 @@ export default function App() {
   const randomQuote = spiritualQuotes[dateNum % spiritualQuotes.length];
 
   return (
-    <div className="min-h-screen bg-amber-50/20 md:bg-[#8A1A1A]/5 flex justify-center items-center text-[#5C1A1A] select-none md:p-6 font-sans" id="app_root">
+    <div className="min-h-screen bg-amber-50/20 md:bg-[#8A1A1A]/5 flex justify-center items-center text-[#5C1A1A] select-none md:p-6 lg:p-0 font-sans" id="app_root">
       
       {/* Centered Mobile Device Frame simulating a native mobile app (Visible ONLY on Mobile/Tablet screens) */}
       <div className="w-full max-w-md bg-[#FFFDF0] h-screen max-h-screen md:h-[92vh] md:max-h-[850px] flex flex-col justify-between shadow-2xl relative border-x border-amber-200 md:border md:border-amber-900/15 md:rounded-3xl overflow-hidden animate-fade-in lg:hidden" id="mobile_device_frame">
@@ -445,7 +445,7 @@ export default function App() {
       </div>
 
       {/* Brand New Dedicated Widescreen Desktop Website View (Visible ONLY on lg and above) */}
-      <div className="hidden lg:flex flex-col w-full max-w-[1250px] h-[92vh] max-h-[850px] bg-[#FFFDF0] border-2 border-amber-900/15 rounded-3xl overflow-hidden shadow-2xl relative animate-fade-in" id="desktop_website_frame">
+      <div className="hidden lg:flex flex-col w-screen h-screen bg-[#FFFDF0] overflow-hidden relative animate-fade-in" id="desktop_website_frame">
         {/* TOP STATUS BAR HEADER (Beautiful, elegant crimson and gold desktop header) */}
         <header className="flex items-center justify-between px-6 py-4 bg-[#8A1A1A] text-[#FDF6E2] shadow-md border-b-4 border-[#D97706] shrink-0" id="desktop_header">
           {/* Logo & Branding */}
