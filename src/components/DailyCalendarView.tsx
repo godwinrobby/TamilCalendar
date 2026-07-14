@@ -132,7 +132,7 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
       </div>
 
       {/* Interactive Sheet Container */}
-      <div className="flex-grow max-w-md w-full mx-auto px-4 mt-4 relative overflow-hidden" id="sheet_container" style={{ perspective: 1200 }}>
+      <div className="w-full max-w-md mx-auto px-4 mt-4 relative overflow-hidden flex-shrink-0" id="sheet_container" style={{ perspective: 1200 }}>
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={selectedDateStr}
@@ -141,7 +141,7 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
             initial="enter"
             animate="center"
             exit="exit"
-            className="w-full bg-[#FCF8E3] border-4 border-[#8A1A1A] rounded-2xl shadow-xl overflow-hidden relative flex flex-col min-h-[580px] border-b-8"
+            className="w-full bg-[#FCF8E3] border-4 border-[#8A1A1A] rounded-2xl shadow-xl overflow-hidden relative flex flex-col min-h-[580px] border-b-8 flex-shrink-0"
             id={`sheet_card_${selectedDateStr}`}
           >
             {/* Traditional Calendar Aesthetic Header / Torn Sheet Pattern */}
@@ -152,7 +152,7 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
             </div>
 
             {/* Inner Content Padding */}
-            <div className="pt-6 px-4 pb-4 flex-grow flex flex-col justify-between">
+            <div className="pt-6 px-4 pb-5 flex-grow flex flex-col justify-start space-y-4">
               
               {/* Year & Month Top Title */}
               <div className="flex justify-between items-center border-b border-dashed border-[#8A1A1A]/30 pb-2 text-center" id="sheet_title_row">
