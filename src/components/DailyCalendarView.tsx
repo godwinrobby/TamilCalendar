@@ -241,25 +241,25 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
               <div className="border-t-2 border-dashed border-[#8A1A1A]/20 w-full my-2.5"></div>
 
               {/* Gregorian and Tamil Dates side-by-side with Vertical Divider */}
-              <div className="flex items-center justify-around py-1" id="traditional_date_cards_container">
+              <div className="flex items-center justify-center space-x-3.5 md:space-x-5 py-2" id="traditional_date_cards_container">
                 {/* Left Card: Gregorian Day */}
-                <div className="w-[45%] bg-[#FFF9D6] border-2 border-[#8A1A1A] rounded-2xl p-3 flex flex-col items-center justify-center shadow-inner" id="card_gregorian">
-                  <span className="text-4xl md:text-5xl font-black text-[#8A1A1A] tracking-tight">{engDay}</span>
-                  <span className="text-[10px] md:text-xs font-black text-amber-900 mt-1 uppercase text-center">
+                <div className="w-[145px] md:w-[175px] h-[110px] md:h-[130px] bg-[#FFFCE8] border-2 border-[#8A1A1A] rounded-2xl flex flex-col items-center justify-center shadow-sm" id="card_gregorian">
+                  <span className="text-4xl md:text-5xl font-black text-[#8A1A1A] tracking-tight leading-none">{engDay}</span>
+                  <span className="text-[10px] md:text-xs font-bold text-amber-950 mt-2.5 uppercase text-center tracking-wide">
                     {getEngMonthInTamil(selectedDateStr)} {engYear}
                   </span>
                 </div>
 
                 {/* Vertical Divider Line */}
-                <div className="w-[1px] bg-amber-500/30 h-16" id="card_vertical_divider"></div>
+                <div className="w-[1.5px] bg-amber-500/20 h-20 self-center" id="card_vertical_divider"></div>
 
                 {/* Right Card: Tamil Month & Tamil Day */}
-                <div className="w-[45%] bg-[#FFFCE8] border border-amber-300 rounded-2xl p-3 flex flex-col items-center justify-center shadow-sm" id="card_tamil">
-                  <span className="text-[9px] md:text-[10px] uppercase font-black text-amber-700">தமிழ் மாதம்</span>
-                  <span className="text-2xl md:text-3xl font-black text-[#8A1A1A] tracking-tight mt-1">
+                <div className="w-[145px] md:w-[175px] h-[110px] md:h-[130px] bg-[#FFFCE8] border-2 border-amber-400 rounded-2xl flex flex-col items-center justify-center shadow-sm" id="card_tamil">
+                  <span className="text-[9px] md:text-[10px] font-bold text-amber-800 uppercase tracking-wider">தமிழ் மாதம்</span>
+                  <span className="text-2xl md:text-3xl font-black text-[#8A1A1A] tracking-tight mt-1 leading-none">
                     {calendarInfo.tamilMonth}
                   </span>
-                  <span className="text-2xl md:text-3xl font-extrabold text-[#D97706] tracking-tight mt-0.5">
+                  <span className="text-2xl md:text-3xl font-black text-[#D97706] tracking-tight mt-1.5 leading-none">
                     {calendarInfo.tamilDay}
                   </span>
                 </div>
