@@ -73,30 +73,11 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
 
   return (
     <div className="h-full flex flex-col overflow-hidden bg-[#FFFDF0] text-[#5C1A1A] font-sans" id="daily_calendar_container">
-      {/* Top Header */}
-      <header className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-[#8A1A1A] text-[#FDF6E2] shadow-md border-b-4 border-[#D97706]" id="daily_header">
-        <button 
-          onClick={onClose} 
-          className="flex items-center justify-center w-9 h-9 bg-[#FCF8E3] text-[#8A1A1A] rounded-full hover:bg-amber-50 transition shadow-sm border border-amber-200/50 active:scale-95 flex-shrink-0"
-          title="முகப்பு (Home)"
-          id="btn_back_dashboard"
-        >
-          <ChevronLeft className="w-5 h-5 flex-shrink-0" />
-        </button>
-        <h1 className="text-lg md:text-xl font-bold font-display flex items-center space-x-2" id="header_title">
-          <Calendar className="w-5 h-5 text-amber-300" />
-          <span>நாள்காட்டி (Daily Sheet)</span>
-        </h1>
-        <div className="w-10 h-10 flex items-center justify-center rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
-          <span className="font-mono text-sm font-bold">{engDay}</span>
-        </div>
-      </header>
-
       {/* Scrollable Body */}
       <div className="flex-grow overflow-y-auto pb-20 scrollbar-thin flex flex-col" id="daily_scroll_body">
 
       {/* Date Navigation and Selector Bar */}
-      <div className="max-w-md md:max-w-lg w-full mx-auto px-4 mt-4" id="navigation_controls">
+      <div className="max-w-md md:max-w-lg w-full mx-auto px-2 mt-2" id="navigation_controls">
         <div className="flex items-center justify-between bg-amber-100/70 p-2 rounded-2xl border border-amber-200 shadow-sm">
           <button 
             onClick={() => changeDate(-1)} 
@@ -132,7 +113,7 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
       </div>
 
       {/* Interactive Sheet Container */}
-      <div className="w-full max-w-md md:max-w-lg mx-auto px-4 mt-4 relative overflow-hidden flex-shrink-0" id="sheet_container" style={{ perspective: 1200 }}>
+      <div className="w-full max-w-md md:max-w-lg mx-auto px-2 mt-2 relative overflow-hidden flex-shrink-0" id="sheet_container" style={{ perspective: 1200 }}>
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={selectedDateStr}
@@ -152,7 +133,7 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
             </div>
 
             {/* Inner Content Padding */}
-            <div className="pt-6 px-4 pb-5 flex-grow flex flex-col justify-start space-y-4">
+            <div className="pt-5 px-3 pb-4 flex-grow flex flex-col justify-start space-y-3">
               
               {/* Year & Month Top Title */}
               <div className="flex justify-between items-center border-b border-dashed border-[#8A1A1A]/30 pb-2 text-center" id="sheet_title_row">

@@ -89,29 +89,12 @@ export default function FastingDaysView({ onSelectDay, onClose }: FastingDaysVie
 
   return (
     <div className="h-full flex flex-col overflow-hidden bg-[#FFFDF0] text-[#5C1A1A] font-sans" id="fasting_view_container">
-      {/* Top Header */}
-      <header className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-[#8A1A1A] text-[#FDF6E2] shadow-md border-b-4 border-[#D97706]" id="fasting_header">
-        <button 
-          onClick={onClose} 
-          className="flex items-center justify-center w-9 h-9 bg-[#FCF8E3] text-[#8A1A1A] rounded-full hover:bg-amber-50 transition shadow-sm border border-amber-200/50 active:scale-95 flex-shrink-0"
-          title="முகப்பு (Home)"
-          id="btn_back_dashboard"
-        >
-          <ChevronLeft className="w-5 h-5 flex-shrink-0" />
-        </button>
-        <h1 className="text-base md:text-lg font-bold font-display flex items-center space-x-2 animate-pulse" id="fasting_title">
-          <ShieldAlert className="w-5 h-5 text-amber-300" />
-          <span>விரத நாட்கள் (Fasting Schedule)</span>
-        </h1>
-        <div className="w-10"></div>
-      </header>
-
       {/* Scrollable Body */}
       <div className="flex-grow overflow-y-auto pb-20 scrollbar-thin flex flex-col" id="fasting_scroll_body">
 
       {/* Dynamic Nearest Fasting Countdown Banner */}
       {upcomingFastingDay && (
-        <div className="max-w-md md:max-w-2xl lg:max-w-3xl w-full mx-auto px-4 mt-4" id="countdown_banner">
+        <div className="max-w-md md:max-w-2xl lg:max-w-3xl w-full mx-auto px-2 mt-2" id="countdown_banner">
           <div className="bg-gradient-to-br from-[#8A1A1A] to-[#A32222] text-[#FDF6E2] p-4 rounded-2xl shadow-xl relative overflow-hidden border-2 border-amber-400">
             {/* Background design */}
             <div className="absolute right-0 bottom-0 opacity-10">
@@ -149,7 +132,7 @@ export default function FastingDaysView({ onSelectDay, onClose }: FastingDaysVie
       )}
 
       {/* Filter Options */}
-      <div className="max-w-md md:max-w-2xl lg:max-w-3xl w-full mx-auto px-4 mt-4 space-y-2" id="fasting_filters">
+      <div className="max-w-md md:max-w-2xl lg:max-w-3xl w-full mx-auto px-2 mt-2 space-y-2" id="fasting_filters">
         <h3 className="text-xs font-bold text-amber-900 uppercase tracking-widest block">மாதம் மற்றும் விரத வகை தேர்வு</h3>
         
         {/* Month Scroll */}
@@ -189,7 +172,7 @@ export default function FastingDaysView({ onSelectDay, onClose }: FastingDaysVie
       </div>
 
       {/* Fasting Days list */}
-      <div className="flex-grow max-w-md md:max-w-2xl lg:max-w-3xl w-full mx-auto px-4 mt-4 space-y-3" id="fasting_list_container">
+      <div className="flex-grow max-w-md md:max-w-2xl lg:max-w-3xl w-full mx-auto px-2 mt-2 space-y-3" id="fasting_list_container">
         {filteredFastingDays.length > 0 ? (
           filteredFastingDays.map((fast) => {
             const dateInfo = getTamilCalendarInfo(fast.date);

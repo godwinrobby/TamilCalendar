@@ -99,28 +99,11 @@ export default function MonthlyCalendarView({ onSelectDay, onClose }: MonthlyCal
 
   return (
     <div className="h-full flex flex-col overflow-hidden bg-[#FFFDF0] text-[#5C1A1A] font-sans" id="monthly_calendar_container">
-      {/* Top Header */}
-      <header className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-[#8A1A1A] text-[#FDF6E2] shadow-md border-b-4 border-[#D97706]" id="monthly_header">
-        <button 
-          onClick={onClose} 
-          className="flex items-center justify-center w-9 h-9 bg-[#FCF8E3] text-[#8A1A1A] rounded-full hover:bg-amber-50 transition shadow-sm border border-amber-200/50 active:scale-95 flex-shrink-0"
-          title="முகப்பு (Home)"
-          id="btn_back_dashboard"
-        >
-          <ChevronLeft className="w-5 h-5 flex-shrink-0" />
-        </button>
-        <h1 className="text-lg md:text-xl font-bold font-display flex items-center space-x-2 animate-fade-in" id="monthly_title">
-          <Calendar className="w-5 h-5 text-amber-300 animate-pulse" />
-          <span>மாதகாட்டி (Monthly Calendar)</span>
-        </h1>
-        <div className="w-10"></div> {/* Spacer */}
-      </header>
-
       {/* Scrollable Body */}
       <div className="flex-grow overflow-y-auto pb-20 scrollbar-thin flex flex-col" id="monthly_scroll_body">
 
       {/* Month Switching Controls */}
-      <div className="max-w-md md:max-w-2xl lg:max-w-3xl w-full mx-auto px-4 mt-4" id="month_navigation">
+      <div className="max-w-md md:max-w-2xl lg:max-w-3xl w-full mx-auto px-2 mt-2" id="month_navigation">
         <div className="flex items-center justify-between bg-[#FCE5A2] p-3 rounded-2xl border-2 border-[#8A1A1A] shadow-md">
           <button 
             onClick={prevMonth} 
@@ -150,7 +133,7 @@ export default function MonthlyCalendarView({ onSelectDay, onClose }: MonthlyCal
       </div>
 
       {/* Calendar Grid Container */}
-      <div className="flex-grow max-w-md md:max-w-2xl lg:max-w-3xl w-full mx-auto px-4 mt-4" id="calendar_grid_wrapper">
+      <div className="flex-grow max-w-md md:max-w-2xl lg:max-w-3xl w-full mx-auto px-2 mt-2" id="calendar_grid_wrapper">
         <div className="bg-white border-2 border-[#8A1A1A] rounded-2xl shadow-lg p-2.5 overflow-hidden">
           {/* Weekday Labels */}
           <div className="grid grid-cols-7 gap-1 text-center font-bold text-xs border-b border-[#8A1A1A]/20 pb-2 mb-1">
@@ -249,7 +232,7 @@ export default function MonthlyCalendarView({ onSelectDay, onClose }: MonthlyCal
       </div>
 
       {/* Selected Day Quick-Look Drawer (Interactive drawer appearing when a day is clicked) */}
-      <div className="max-w-md md:max-w-2xl lg:max-w-3xl w-full mx-auto px-4 mt-4" id="drawer_area">
+      <div className="max-w-md md:max-w-2xl lg:max-w-3xl w-full mx-auto px-2 mt-2" id="drawer_area">
         <AnimatePresence>
           {selectedDayInfo ? (
             <motion.div
