@@ -33,6 +33,12 @@ import { motion, AnimatePresence } from 'motion/react';
 type AppView = 'dashboard' | 'daily' | 'monthly' | 'astrology' | 'festivals' | 'fasting' | 'admin';
 
 const parseHashRoute = () => {
+  if (typeof window !== 'undefined') {
+    const pathname = window.location.pathname.replace(/\/$/, ''); // strip trailing slash
+    if (pathname === '/admin' || pathname.endsWith('/admin')) {
+      window.history.replaceState(null, '', '/#/admin');
+    }
+  }
   const hash = typeof window !== 'undefined' ? window.location.hash || '#/dashboard' : '#/dashboard';
   const [pathPart, queryPart] = hash.split('?');
   const view = pathPart.replace('#/', '') || 'dashboard';
