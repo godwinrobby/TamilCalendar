@@ -86,22 +86,16 @@ export const FESTIVALS_2026: Omit<FestivalInfo, 'tamilMonth' | 'tamilDay'>[] = [
   { id: 'f6', name: 'Republic Day', tamilName: 'குடியரசு தினம்', date: '2026-01-26', type: 'national', description: 'Honoring the date on which the Constitution of India came into effect' },
   { id: 'f7', name: 'Thaipusam', tamilName: 'தைப்பூசம்', date: '2026-02-01', type: 'hindu', description: 'Festival celebrated by Tamil Hindus on the full moon in Thai' },
   { id: 'f8', name: 'Maha Shivaratri', tamilName: 'மகா சிவராத்திரி', date: '2026-02-15', type: 'hindu', description: 'The great night of Lord Shiva' },
-  { id: 'f9', name: 'Good Friday', tamilName: 'புனித வெள்ளி', date: '2026-04-03', type: 'christian', description: 'Commemorating the crucifixion of Jesus Christ' },
-  { id: 'f10', name: 'Easter Sunday', tamilName: 'ஈஸ்டர் ஞாயிறு', date: '2026-04-05', type: 'christian', description: 'Resurrection of Jesus Christ' },
   { id: 'f11', name: 'Tamil New Year / Chithirai Kani', tamilName: 'தமிழ்ப் புத்தாண்டு (பராபவ வருடம்)', date: '2026-04-14', type: 'hindu', description: 'Beginning of the Tamil New Year (Parabhava Year)' },
   { id: 'f12', name: 'May Day / Labor Day', tamilName: 'உழைப்பாளர் தினம்', date: '2026-05-01', type: 'national', description: 'Celebrating the achievements of workers' },
-  { id: 'f13', name: 'Bakrid / Eid al-Adha', tamilName: 'பக்ரீத்', date: '2026-05-27', type: 'muslim', description: 'Feast of the Sacrifice' },
-  { id: 'f14', name: 'Muharram', tamilName: 'மொஹரம்', date: '2026-06-25', type: 'muslim', description: 'Islamic New Year month' },
   { id: 'f15', name: 'Independence Day', tamilName: 'சுதந்திர தினம்', date: '2026-08-15', type: 'national', description: 'Commemorating nation\'s independence from the United Kingdom' },
   { id: 'f16', name: 'Krishna Jayanthi', tamilName: 'கிருஷ்ண ஜெயந்தி', date: '2026-09-04', type: 'hindu', description: 'Birth of Lord Krishna' },
   { id: 'f17', name: 'Vinayagar Chaturthi', tamilName: 'விநாயகர் சதுர்த்தி', date: '2026-09-15', type: 'hindu', description: 'Festival celebrating the birth of Lord Ganesha' },
-  { id: 'f18', name: 'Milad-un-Nabi', tamilName: 'மிலாதுன் நபி', date: '2026-09-24', type: 'muslim', description: 'Observance of the birthday of Islamic Prophet Muhammad' },
   { id: 'f19', name: 'Gandhi Jayanthi', tamilName: 'காந்தி ஜெயந்தி', date: '2026-10-02', type: 'national', description: 'Birthday of Mahatma Gandhi' },
   { id: 'f20', name: 'Ayutha Pooja', tamilName: 'ஆயுத பூஜை', date: '2026-10-19', type: 'hindu', description: 'Worship of tools, implements and knowledge' },
   { id: 'f21', name: 'Vijayadhasami', tamilName: 'விஜயதசமி', date: '2026-10-20', type: 'hindu', description: 'Celebrating victory of good over evil' },
   { id: 'f22', name: 'Deepavali', tamilName: 'தீபாவளி', date: '2026-11-08', type: 'hindu', description: 'The Festival of Lights' },
   { id: 'f23', name: 'Karthigai Deepam', tamilName: 'கார்த்திகை தீபம்', date: '2026-11-23', type: 'hindu', description: 'Festival of Lights celebrated on the full moon of Karthigai' },
-  { id: 'f24', name: 'Christmas', tamilName: 'கிறிஸ்துமஸ்', date: '2026-12-25', type: 'christian', description: 'Celebrating the birth of Jesus Christ' },
 ];
 
 // Ephemeris calculation helpers for 2026

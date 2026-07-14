@@ -15,7 +15,7 @@ interface FestivalsViewProps {
 
 export default function FestivalsView({ onSelectDay, onClose }: FestivalsViewProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedTab, setSelectedTab] = useState<'all' | 'hindu' | 'christian' | 'muslim' | 'holiday'>('all');
+  const [selectedTab, setSelectedTab] = useState<'all' | 'hindu' | 'holiday'>('all');
 
   const festivals = useMemo(() => getFestivalsList(), []);
 
@@ -83,7 +83,7 @@ export default function FestivalsView({ onSelectDay, onClose }: FestivalsViewPro
         </div>
       </div>
 
-      {/* Categories Tabs */}
+       {/* Categories Tabs */}
       <div className="max-w-md md:max-w-2xl lg:max-w-3xl w-full mx-auto px-2 mt-2" id="festivals_tabs">
         <div className="flex space-x-1 bg-amber-100 p-1 rounded-xl border border-amber-200 overflow-x-auto scrollbar-none" id="tabs_scrollable">
           <button 
@@ -97,18 +97,6 @@ export default function FestivalsView({ onSelectDay, onClose }: FestivalsViewPro
             className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${selectedTab === 'hindu' ? 'bg-[#8A1A1A] text-white shadow-md' : 'text-[#8A1A1A] hover:bg-amber-200/50'}`}
           >
             இந்து
-          </button>
-          <button 
-            onClick={() => setSelectedTab('christian')}
-            className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${selectedTab === 'christian' ? 'bg-[#8A1A1A] text-white shadow-md' : 'text-[#8A1A1A] hover:bg-amber-200/50'}`}
-          >
-            கிறிஸ்துவம்
-          </button>
-          <button 
-            onClick={() => setSelectedTab('muslim')}
-            className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${selectedTab === 'muslim' ? 'bg-[#8A1A1A] text-white shadow-md' : 'text-[#8A1A1A] hover:bg-amber-200/50'}`}
-          >
-            இஸ்லாம்
           </button>
           <button 
             onClick={() => setSelectedTab('holiday')}
