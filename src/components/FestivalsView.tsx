@@ -40,12 +40,12 @@ export default function FestivalsView({ onSelectDay, onClose }: FestivalsViewPro
 
   // Convert English date (YYYY-MM-DD) to friendly format (DD Month YYYY)
   const formatFriendlyDate = (dateStr: string) => {
-    const d = new Date(dateStr);
+    const d = new Date(dateStr + 'T00:00:00Z');
     const months = [
       'ஜனவரி', 'பிப்ரவரி', 'மார்ச்', 'ஏப்ரல்', 'மே', 'ஜூன்',
       'ஜூலை', 'ஆகஸ்ட்', 'செப்டம்பர்', 'அக்டோபர்', 'நவம்பர்', 'டிசம்பர்'
     ];
-    return `${d.getDate()} ${months[d.getMonth()]} 2026`;
+    return `${d.getUTCDate()} ${months[d.getUTCMonth()]} 2026`;
   };
 
   const getIconForType = (type: string) => {

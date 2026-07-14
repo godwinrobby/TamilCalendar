@@ -21,7 +21,7 @@ import {
   Clock,
   ChevronLeft
 } from 'lucide-react';
-import { getTamilCalendarInfo } from './utils/tamilCalendar';
+import { getTamilCalendarInfo, getCurrentISTDateString } from './utils/tamilCalendar';
 import DailyCalendarView from './components/DailyCalendarView';
 import MonthlyCalendarView from './components/MonthlyCalendarView';
 import AstrologyView from './components/AstrologyView';
@@ -33,7 +33,7 @@ type AppView = 'dashboard' | 'daily' | 'monthly' | 'astrology' | 'festivals' | '
 
 export default function App() {
   const [activeView, setActiveView] = useState<AppView>('dashboard');
-  const [selectedDateStr, setSelectedDateStr] = useState<string>('2026-07-13'); // Default to target local time date
+  const [selectedDateStr, setSelectedDateStr] = useState<string>(getCurrentISTDateString()); // Default to Indian Standard Time (GMT+5:30)
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
@@ -46,7 +46,7 @@ export default function App() {
   };
 
   // Get date information for the dashboard header
-  const headerDateInfo = getTamilCalendarInfo(new Date(selectedDateStr));
+  const headerDateInfo = getTamilCalendarInfo(selectedDateStr);
 
   const triggerToast = (msg: string) => {
     setToastMessage(msg);
@@ -75,7 +75,8 @@ export default function App() {
     "அகராதி என்பது புத்தக அறிவு, ஆன்மீகம் என்பது அனுபவ அறிவு."
   ];
 
-  const randomQuote = spiritualQuotes[new Date(selectedDateStr).getDate() % spiritualQuotes.length];
+  const dateNum = parseInt(selectedDateStr.split('-')[2]) || 1;
+  const randomQuote = spiritualQuotes[dateNum % spiritualQuotes.length];
 
   return (
     <div className="min-h-screen bg-amber-50/20 md:bg-[#8A1A1A]/5 flex justify-center items-center text-[#5C1A1A] select-none md:p-6 font-sans" id="app_root">

@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { getFastingDaysForYear, getTamilCalendarInfo } from '../utils/tamilCalendar';
+import { getFastingDaysForYear, getTamilCalendarInfo, getCurrentISTDateString, getISTDateComponents } from '../utils/tamilCalendar';
 import { ChevronLeft, Bell, Calendar, ArrowRight, ShieldAlert, Award, Clock, Star } from 'lucide-react';
 import { FastingDayInfo } from '../types';
 
@@ -14,8 +14,9 @@ interface FastingDaysViewProps {
 }
 
 export default function FastingDaysView({ onSelectDay, onClose }: FastingDaysViewProps) {
+  const istComps = getISTDateComponents();
   const [selectedType, setSelectedType] = useState<string>('all');
-  const [selectedMonth, setSelectedMonth] = useState<number>(6); // Default to July (Index 6)
+  const [selectedMonth, setSelectedMonth] = useState<number>(istComps.month); // Default to current month of IST (GMT+5:30)
 
   const monthNamesTamil = [
     'ஜனவரி', 'பிப்ரவரி', 'மார்ச்', 'ஏப்ரல்', 'மே', 'ஜூன்',
@@ -28,27 +29,27 @@ export default function FastingDaysView({ onSelectDay, onClose }: FastingDaysVie
   // Filter list based on selected Month & Type
   const filteredFastingDays = useMemo(() => {
     return allFastingDays.filter((fast) => {
-      const d = new Date(fast.date);
-      const matchesMonth = d.getMonth() === selectedMonth;
+      const d = new Date(fast.date + 'T00:00:00Z');
+      const matchesMonth = d.getUTCMonth() === selectedMonth;
       const matchesType = selectedType === 'all' || fast.type === selectedType;
       return matchesMonth && matchesType;
     });
   }, [allFastingDays, selectedMonth, selectedType]);
 
-  // Find the nearest upcoming fasting day relative to "2026-07-13" (provided by current local time metadata)
-  const currentLocalTimeStr = '2026-07-13';
+  // Find the nearest upcoming fasting day relative to today's date in GMT+5:30 (IST)
+  const currentLocalTimeStr = getCurrentISTDateString();
   const upcomingFastingDay = useMemo(() => {
     return allFastingDays.find((fast) => {
       return fast.date >= currentLocalTimeStr;
     });
-  }, [allFastingDays]);
+  }, [allFastingDays, currentLocalTimeStr]);
 
   // Compute countdown to the upcoming fasting day
   const countdownText = useMemo(() => {
     if (!upcomingFastingDay) return 'இந்த வருட விரத நாட்கள் அனைத்தும் முடிவடைந்தன.';
     
-    const currDate = new Date(currentLocalTimeStr);
-    const fastDate = new Date(upcomingFastingDay.date);
+    const currDate = new Date(currentLocalTimeStr + 'T00:00:00Z');
+    const fastDate = new Date(upcomingFastingDay.date + 'T00:00:00Z');
     const diffTime = fastDate.getTime() - currDate.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
@@ -59,11 +60,11 @@ export default function FastingDaysView({ onSelectDay, onClose }: FastingDaysVie
     } else {
       return `${diffDays} நாட்களில் (${diffDays} Days)`;
     }
-  }, [upcomingFastingDay]);
+  }, [upcomingFastingDay, currentLocalTimeStr]);
 
   const formatFriendlyDate = (dateStr: string) => {
-    const d = new Date(dateStr);
-    return `${d.getDate()} ${monthNamesTamil[d.getMonth()]} 2026`;
+    const d = new Date(dateStr + 'T00:00:00Z');
+    return `${d.getUTCDate()} ${monthNamesTamil[d.getUTCMonth()]} 2026`;
   };
 
   const getTypeBadgeColor = (type: string) => {

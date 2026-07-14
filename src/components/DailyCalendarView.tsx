@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { getTamilCalendarInfo } from '../utils/tamilCalendar';
+import { getTamilCalendarInfo, getCurrentISTDateString } from '../utils/tamilCalendar';
 import { Calendar, ChevronLeft, ChevronRight, Award, Flame, AlertTriangle, Eye, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -15,15 +15,15 @@ interface DailyCalendarViewProps {
 
 export default function DailyCalendarView({ initialDate, onClose }: DailyCalendarViewProps) {
   const [selectedDateStr, setSelectedDateStr] = useState<string>(
-    initialDate || new Date().toISOString().split('T')[0]
+    initialDate || getCurrentISTDateString()
   );
   const [direction, setDirection] = useState<'left' | 'right'>('right');
 
-  const calendarInfo = getTamilCalendarInfo(new Date(selectedDateStr));
+  const calendarInfo = getTamilCalendarInfo(selectedDateStr);
 
   const changeDate = (offset: number) => {
-    const currentDate = new Date(selectedDateStr);
-    currentDate.setDate(currentDate.getDate() + offset);
+    const currentDate = new Date(selectedDateStr + 'T00:00:00Z');
+    currentDate.setUTCDate(currentDate.getUTCDate() + offset);
     setDirection(offset > 0 ? 'right' : 'left');
     setSelectedDateStr(currentDate.toISOString().split('T')[0]);
   };
@@ -31,7 +31,7 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const dateVal = e.target.value;
     if (dateVal) {
-      const isLater = new Date(dateVal).getTime() > new Date(selectedDateStr).getTime();
+      const isLater = new Date(dateVal + 'T00:00:00Z').getTime() > new Date(selectedDateStr + 'T00:00:00Z').getTime();
       setDirection(isLater ? 'right' : 'left');
       setSelectedDateStr(dateVal);
     }
@@ -39,16 +39,16 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
 
   // Convert English Month to Tamil name for header
   const getEngMonthInTamil = (dateStr: string) => {
-    const d = new Date(dateStr);
+    const d = new Date(dateStr + 'T00:00:00Z');
     const months = [
       'ஜனவரி', 'பிப்ரவரி', 'மார்ச்', 'ஏப்ரல்', 'மே', 'ஜூன்',
       'ஜூலை', 'ஆகஸ்ட்', 'செப்டம்பர்', 'அக்டோபர்', 'நவம்பர்', 'டிசம்பர்'
     ];
-    return months[d.getMonth()];
+    return months[d.getUTCMonth()];
   };
 
-  const engDay = new Date(selectedDateStr).getDate();
-  const engYear = new Date(selectedDateStr).getFullYear();
+  const engDay = new Date(selectedDateStr + 'T00:00:00Z').getUTCDate();
+  const engYear = new Date(selectedDateStr + 'T00:00:00Z').getUTCFullYear();
 
   // Animation variants
   const slideVariants = {

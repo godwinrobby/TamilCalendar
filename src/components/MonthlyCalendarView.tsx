@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { getTamilCalendarInfo, TAMIL_MONTHS, getTamilMonthAndDay, getThithiForDate } from '../utils/tamilCalendar';
+import { getTamilCalendarInfo, TAMIL_MONTHS, getTamilMonthAndDay, getThithiForDate, getISTDateComponents } from '../utils/tamilCalendar';
 import { ChevronLeft, ChevronRight, Calendar, ArrowUpRight, Flame, Moon, Sun, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { TamilDateInfo } from '../types';
@@ -15,9 +15,9 @@ interface MonthlyCalendarViewProps {
 }
 
 export default function MonthlyCalendarView({ onSelectDay, onClose }: MonthlyCalendarViewProps) {
-  // Default to current month of 2026 (or July 2026)
-  const [currentYear, setCurrentYear] = useState(2026);
-  const [currentMonth, setCurrentMonth] = useState(6); // July (0-indexed, so 6 is July)
+  const istComps = getISTDateComponents();
+  const [currentYear, setCurrentYear] = useState(istComps.year);
+  const [currentMonth, setCurrentMonth] = useState(istComps.month); 
   const [selectedDayInfo, setSelectedDayInfo] = useState<TamilDateInfo | null>(null);
 
   const monthNamesEnglish = [
@@ -31,12 +31,12 @@ export default function MonthlyCalendarView({ onSelectDay, onClose }: MonthlyCal
 
   // Days in selected month
   const getDaysInMonth = (year: number, month: number) => {
-    return new Date(year, month + 1, 0).getDate();
+    return new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
   };
 
   // First day of selected month (to pad the grid)
   const getFirstDayOfMonth = (year: number, month: number) => {
-    return new Date(year, month, 1).getDay();
+    return new Date(Date.UTC(year, month, 1)).getUTCDay();
   };
 
   const totalDays = getDaysInMonth(currentYear, currentMonth);
@@ -72,8 +72,11 @@ export default function MonthlyCalendarView({ onSelectDay, onClose }: MonthlyCal
 
   // Actual days
   for (let d = 1; d <= totalDays; d++) {
-    const tempDate = new Date(currentYear, currentMonth, d, 12, 0, 0); // At noon to avoid timezone issues
-    const info = getTamilCalendarInfo(tempDate);
+    const monthStr = String(currentMonth + 1).padStart(2, '0');
+    const dayStr = String(d).padStart(2, '0');
+    const dateStr = `${currentYear}-${monthStr}-${dayStr}`;
+    const info = getTamilCalendarInfo(dateStr);
+    const tempDate = new Date(Date.UTC(currentYear, currentMonth, d));
     cells.push({ date: tempDate, info });
   }
 
@@ -160,7 +163,7 @@ export default function MonthlyCalendarView({ onSelectDay, onClose }: MonthlyCal
                 );
               }
 
-              const d = cell.date.getDate();
+              const d = cell.date.getUTCDate();
               const dots = getDotDetails(cell.info);
               const isSelected = selectedDayInfo?.englishDate === cell.info.englishDate;
               
@@ -183,7 +186,7 @@ export default function MonthlyCalendarView({ onSelectDay, onClose }: MonthlyCal
                 >
                   {/* Top Row: English Date & Astrological markers */}
                   <div className="flex justify-between items-center w-full">
-                    <span className={`text-sm font-extrabold font-mono ${cell.date.getDay() === 0 ? 'text-red-600' : 'text-amber-950'}`}>
+                    <span className={`text-sm font-extrabold font-mono ${cell.date.getUTCDay() === 0 ? 'text-red-600' : 'text-amber-950'}`}>
                       {d}
                     </span>
                     

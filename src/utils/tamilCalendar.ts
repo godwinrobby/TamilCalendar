@@ -138,12 +138,44 @@ export function getNakshatramForDate(date: Date): { name: string; index: number 
 }
 
 /**
+ * Returns the components of the current date and time in Indian Standard Time (GMT +5:30)
+ */
+export function getISTDateComponents() {
+  const now = new Date();
+  // Get UTC time in milliseconds
+  const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+  // IST is UTC + 5:30 (5.5 * 3600000 ms = 19800000 ms)
+  const istTime = new Date(utcTime + 19800000);
+  
+  return {
+    year: istTime.getUTCFullYear(),
+    month: istTime.getUTCMonth(), // 0-indexed (0 = Jan, 11 = Dec)
+    date: istTime.getUTCDate(),   // 1-31
+    day: istTime.getUTCDay(),     // 0-6 (0 = Sun, 6 = Sat)
+    hours: istTime.getUTCHours(),
+    minutes: istTime.getUTCMinutes(),
+    seconds: istTime.getUTCSeconds()
+  };
+}
+
+/**
+ * Returns the current date string (YYYY-MM-DD) in Indian Standard Time (GMT +5:30)
+ */
+export function getCurrentISTDateString(): string {
+  const comps = getISTDateComponents();
+  const year = comps.year;
+  const month = String(comps.month + 1).padStart(2, '0');
+  const day = String(comps.date).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
  * Helper to get Tamil Month, Tamil Day and Tamil Year for a given English Date in 2026
  */
 export function getTamilMonthAndDay(date: Date): { month: string; day: number; year: string } {
-  const year = date.getFullYear();
-  const month = date.getMonth(); // 0-indexed
-  const day = date.getDate();
+  const year = date.getUTCFullYear();
+  const month = date.getUTCMonth(); // 0-indexed
+  const day = date.getUTCDate();
 
   // Tamil year transitions on April 14 (Tamil New Year)
   // Before April 14 2026: Visvavasu (விஸ்வாவசு)
@@ -157,18 +189,18 @@ export function getTamilMonthAndDay(date: Date): { month: string; day: number; y
   // Format: [EnglishMonthIndex, TransitionDay, MonthNameBeforeTransition, MonthNameAfterTransition]
   // e.g. January 1-13 is Margazhi (8), Jan 14 onwards is Thai (9)
   const transitions = [
-    { engMonth: 0, day: 14, prevMonth: 'மார்கழி', nextMonth: 'தை', prevStart: new Date(year - 1, 11, 16), nextStart: new Date(year, 0, 14) },
-    { engMonth: 1, day: 12, prevMonth: 'தை', nextMonth: 'மாசி', prevStart: new Date(year, 0, 14), nextStart: new Date(year, 1, 12) },
-    { engMonth: 2, day: 14, prevMonth: 'மாசி', nextMonth: 'பங்குனி', prevStart: new Date(year, 1, 12), nextStart: new Date(year, 2, 14) },
-    { engMonth: 3, day: 14, prevMonth: 'பங்குனி', nextMonth: 'சித்திரை', prevStart: new Date(year, 2, 14), nextStart: new Date(year, 3, 14) },
-    { engMonth: 4, day: 15, prevMonth: 'சித்திரை', nextMonth: 'வைகாசி', prevStart: new Date(year, 3, 14), nextStart: new Date(year, 4, 15) },
-    { engMonth: 5, day: 15, prevMonth: 'வைகாசி', nextMonth: 'ஆனி', prevStart: new Date(year, 4, 15), nextStart: new Date(year, 5, 15) },
-    { engMonth: 6, day: 16, prevMonth: 'ஆனி', nextMonth: 'ஆடி', prevStart: new Date(year, 5, 15), nextStart: new Date(year, 6, 16) },
-    { engMonth: 7, day: 16, prevMonth: 'ஆடி', nextMonth: 'ஆவணி', prevStart: new Date(year, 6, 16), nextStart: new Date(year, 7, 16) },
-    { engMonth: 8, day: 16, prevMonth: 'ஆவணி', nextMonth: 'புரட்டாசி', prevStart: new Date(year, 7, 16), nextStart: new Date(year, 8, 16) },
-    { engMonth: 9, day: 17, prevMonth: 'புரட்டாசி', nextMonth: 'ஐப்பசி', prevStart: new Date(year, 8, 16), nextStart: new Date(year, 9, 17) },
-    { engMonth: 10, day: 16, prevMonth: 'ஐப்பசி', nextMonth: 'கார்த்திகை', prevStart: new Date(year, 9, 17), nextStart: new Date(year, 10, 16) },
-    { engMonth: 11, day: 16, prevMonth: 'கார்த்திகை', nextMonth: 'மார்கழி', prevStart: new Date(year, 10, 16), nextStart: new Date(year, 11, 16) }
+    { engMonth: 0, day: 14, prevMonth: 'மார்கழி', nextMonth: 'தை', prevStart: new Date(Date.UTC(year - 1, 11, 16)), nextStart: new Date(Date.UTC(year, 0, 14)) },
+    { engMonth: 1, day: 12, prevMonth: 'தை', nextMonth: 'மாசி', prevStart: new Date(Date.UTC(year, 0, 14)), nextStart: new Date(Date.UTC(year, 1, 12)) },
+    { engMonth: 2, day: 14, prevMonth: 'மாசி', nextMonth: 'பங்குனி', prevStart: new Date(Date.UTC(year, 1, 12)), nextStart: new Date(Date.UTC(year, 2, 14)) },
+    { engMonth: 3, day: 14, prevMonth: 'பங்குனி', nextMonth: 'சித்திரை', prevStart: new Date(Date.UTC(year, 2, 14)), nextStart: new Date(Date.UTC(year, 3, 14)) },
+    { engMonth: 4, day: 15, prevMonth: 'சித்திரை', nextMonth: 'வைகாசி', prevStart: new Date(Date.UTC(year, 3, 14)), nextStart: new Date(Date.UTC(year, 4, 15)) },
+    { engMonth: 5, day: 15, prevMonth: 'வைகாசி', nextMonth: 'ஆனி', prevStart: new Date(Date.UTC(year, 4, 15)), nextStart: new Date(Date.UTC(year, 5, 15)) },
+    { engMonth: 6, day: 16, prevMonth: 'ஆனி', nextMonth: 'ஆடி', prevStart: new Date(Date.UTC(year, 5, 15)), nextStart: new Date(Date.UTC(year, 6, 16)) },
+    { engMonth: 7, day: 16, prevMonth: 'ஆடி', nextMonth: 'ஆவணி', prevStart: new Date(Date.UTC(year, 6, 16)), nextStart: new Date(Date.UTC(year, 7, 16)) },
+    { engMonth: 8, day: 16, prevMonth: 'ஆவணி', nextMonth: 'புரட்டாசி', prevStart: new Date(Date.UTC(year, 7, 16)), nextStart: new Date(Date.UTC(year, 8, 16)) },
+    { engMonth: 9, day: 17, prevMonth: 'புரட்டாசி', nextMonth: 'ஐப்பசி', prevStart: new Date(Date.UTC(year, 8, 16)), nextStart: new Date(Date.UTC(year, 9, 17)) },
+    { engMonth: 10, day: 16, prevMonth: 'ஐப்பசி', nextMonth: 'கார்த்திகை', prevStart: new Date(Date.UTC(year, 9, 17)), nextStart: new Date(Date.UTC(year, 10, 16)) },
+    { engMonth: 11, day: 16, prevMonth: 'கார்த்திகை', nextMonth: 'மார்கழி', prevStart: new Date(Date.UTC(year, 10, 16)), nextStart: new Date(Date.UTC(year, 11, 16)) }
   ];
 
   const trans = transitions[month];
@@ -194,10 +226,18 @@ export function getTamilMonthAndDay(date: Date): { month: string; day: number; y
  * Retrieves astrologically complete info for any day
  */
 export function getTamilCalendarInfo(dateInput: Date | string): TamilDateInfo {
-  const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+  let date: Date;
+  if (typeof dateInput === 'string') {
+    // Append T00:00:00Z to force parsing as UTC midnight
+    const normalizedStr = dateInput.includes('T') ? dateInput : `${dateInput}T00:00:00Z`;
+    date = new Date(normalizedStr);
+  } else {
+    date = dateInput;
+  }
+  
   const engStr = date.toISOString().split('T')[0];
   
-  const weekdayIndex = date.getDay();
+  const weekdayIndex = date.getUTCDay();
   const dayOfWeek = TAMIL_WEEKDAYS[weekdayIndex];
 
   const { month: tamilMonth, day: tamilDay, year: tamilYear } = getTamilMonthAndDay(date);
