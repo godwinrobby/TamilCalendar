@@ -347,20 +347,6 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
                 <h3 className="text-xs font-black uppercase tracking-wider text-[#8A1A1A]">பஞ்சாங்கம்</h3>
               </div>
               
-              {/* Festivals if any exist */}
-              {calendarInfo.festivals && calendarInfo.festivals.length > 0 && (
-                <div className="p-4 pb-2 border-b border-[#8A1A1A]/10" id="panchangam_festivals">
-                  <span className="text-[10px] font-black text-amber-800 uppercase tracking-wide">சிறப்பு நாட்கள் / பண்டிகைகள்:</span>
-                  <div className="flex flex-wrap gap-1.5 mt-1">
-                    {calendarInfo.festivals.map((fest, idx) => (
-                      <span key={idx} className="inline-flex items-center bg-[#8A1A1A]/10 text-[#8A1A1A] border border-[#8A1A1A]/20 px-2.5 py-0.5 rounded-lg text-xs font-bold">
-                        ★ {fest}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {/* Detailed Rows with Dividers matching the user-uploaded image layout */}
               <div className="divide-y divide-[#8A1A1A]/10" id="panchangam_detailed_rows">
                 
@@ -453,7 +439,7 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
                 const gne = splitTimeValue(calendarInfo.gowriNallaNeram.evening || 'மாலை 07:30 - 09:00');
 
                 return (
-                  <div className="p-4 grid grid-cols-2 gap-3" id="timing_grids">
+                  <div className="p-4 grid grid-cols-1 gap-3" id="timing_grids">
                     {/* நல்ல நேரம் */}
                     <div className="bg-white border border-[#A3E635]/30 rounded-2xl p-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)] flex flex-col" id="box_nalla_neram">
                       <div className="text-center mb-2 pb-1.5 border-b border-[#E2E8F0]">
@@ -518,32 +504,32 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
 
                 return (
                   <div className="p-4 space-y-4" id="obstacles_details">
-                    <div className="grid grid-cols-3 gap-2 text-center" id="bad_timings_grid">
+                    <div className="grid grid-cols-1 gap-3" id="bad_timings_grid">
                       
                       {/* ராகுகாலம் */}
-                      <div className="bg-[#FDF2F2] border border-[#FEE2E2] rounded-2xl p-2 flex flex-col justify-between h-[90px]">
-                        <span className="text-[#991B1B] font-extrabold text-[11px]">ராகுகாலம்:</span>
-                        <div className="leading-tight mb-1">
-                          <span className="text-slate-800 font-black text-xs block">{rk.period}</span>
-                          <span className="text-slate-800 font-black text-[10px] block">{rk.time}</span>
+                      <div className="bg-[#FDF2F2] border border-[#FEE2E2] rounded-2xl p-3 flex justify-between items-center" id="box_raghu_kalam">
+                        <span className="text-[#991B1B] font-black text-xs md:text-sm">ராகுகாலம்:</span>
+                        <div className="text-right leading-tight">
+                          <span className="text-[#991B1B] font-black text-[11px] block">{rk.period}</span>
+                          <span className="text-slate-800 font-black text-xs md:text-sm">{rk.time}</span>
                         </div>
                       </div>
 
                       {/* எமகண்டம் */}
-                      <div className="bg-[#FDF2F2] border border-[#FEE2E2] rounded-2xl p-2 flex flex-col justify-between h-[90px]">
-                        <span className="text-[#991B1B] font-extrabold text-[11px]">எமகண்டம்:</span>
-                        <div className="leading-tight mb-1">
-                          <span className="text-slate-800 font-black text-xs block">{yg.period}</span>
-                          <span className="text-slate-800 font-black text-[10px] block">{yg.time}</span>
+                      <div className="bg-[#FDF2F2] border border-[#FEE2E2] rounded-2xl p-3 flex justify-between items-center" id="box_yamagandam">
+                        <span className="text-[#991B1B] font-black text-xs md:text-sm">எமகண்டம்:</span>
+                        <div className="text-right leading-tight">
+                          <span className="text-[#991B1B] font-black text-[11px] block">{yg.period}</span>
+                          <span className="text-slate-800 font-black text-xs md:text-sm">{yg.time}</span>
                         </div>
                       </div>
 
                       {/* குளிகை */}
-                      <div className="bg-[#FDF2F2] border border-[#FEE2E2] rounded-2xl p-2 flex flex-col justify-between h-[90px]">
-                        <span className="text-[#991B1B] font-extrabold text-[11px]">குளிகை:</span>
-                        <div className="leading-tight mb-1">
-                          <span className="text-slate-800 font-black text-xs block">{kg.period}</span>
-                          <span className="text-slate-800 font-black text-[10px] block">{kg.time}</span>
+                      <div className="bg-[#FDF2F2] border border-[#FEE2E2] rounded-2xl p-3 flex justify-between items-center" id="box_kuligai">
+                        <span className="text-[#991B1B] font-black text-xs md:text-sm">குளிகை:</span>
+                        <div className="text-right leading-tight">
+                          <span className="text-[#991B1B] font-black text-[11px] block">{kg.period}</span>
+                          <span className="text-slate-800 font-black text-xs md:text-sm">{kg.time}</span>
                         </div>
                       </div>
 
@@ -551,14 +537,14 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
 
                     {/* சூலம் & பரிகாரம் */}
                     <div className="bg-[#FEFCE8] border border-[#FEF08A]/50 rounded-2xl p-3" id="soolam_box">
-                      <div className="grid grid-cols-2 gap-3 text-xs font-bold">
-                        <div className="flex justify-center items-center bg-white border border-[#FDE047] px-2 py-2 rounded-xl">
-                          <span className="text-[#D97706] font-black text-xs">சூலம்:</span>
-                          <strong className="text-[#1E3A8A] font-black text-sm ml-2">{calendarInfo.soolam || 'வடக்கு'}</strong>
+                      <div className="grid grid-cols-1 gap-2.5 text-xs font-bold">
+                        <div className="flex justify-between items-center bg-white border border-[#FDE047] px-3 py-2 rounded-xl">
+                          <span className="text-[#D97706] font-black text-xs md:text-sm">சூலம்:</span>
+                          <strong className="text-[#1E3A8A] font-black text-sm">{calendarInfo.soolam || 'வடக்கு'}</strong>
                         </div>
-                        <div className="flex justify-center items-center bg-white border border-[#FDE047] px-2 py-2 rounded-xl">
-                          <span className="text-[#D97706] font-black text-xs">பரிகாரம்:</span>
-                          <strong className="text-[#1E3A8A] font-black text-sm ml-2">{calendarInfo.parigaram || 'பால்'}</strong>
+                        <div className="flex justify-between items-center bg-white border border-[#FDE047] px-3 py-2 rounded-xl">
+                          <span className="text-[#D97706] font-black text-xs md:text-sm">பரிகாரம்:</span>
+                          <strong className="text-[#1E3A8A] font-black text-sm">{calendarInfo.parigaram || 'பால்'}</strong>
                         </div>
                       </div>
                     </div>
@@ -574,7 +560,7 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
                 <h3 className="text-xs font-black uppercase tracking-wider text-amber-900">இன்றைய ராசிபலன்</h3>
               </div>
 
-              <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3" id="rasi_predictions_grid">
+              <div className="p-4 grid grid-cols-1 gap-3" id="rasi_predictions_grid">
                 {Object.keys(DAILY_RASI_PALAN).map((r) => {
                   const rasiData = getRasiPalanForDate(selectedDateStr, r);
                   const rasiName = rasiData.rasi;

@@ -27,11 +27,12 @@ import MonthlyCalendarView from './components/MonthlyCalendarView';
 import AstrologyView from './components/AstrologyView';
 import FestivalsView from './components/FestivalsView';
 import FastingDaysView from './components/FastingDaysView';
+import AboutUsView from './components/AboutUsView';
 import { motion, AnimatePresence } from 'motion/react';
 
 const AdminView = React.lazy(() => import('./components/AdminView'));
 
-type AppView = 'dashboard' | 'daily' | 'monthly' | 'astrology' | 'festivals' | 'fasting' | 'admin';
+type AppView = 'dashboard' | 'daily' | 'monthly' | 'astrology' | 'festivals' | 'fasting' | 'admin' | 'about';
 
 const parseHashRoute = () => {
   if (typeof window !== 'undefined') {
@@ -44,7 +45,7 @@ const parseHashRoute = () => {
   const [pathPart, queryPart] = hash.split('?');
   const view = pathPart.replace('#/', '') || 'dashboard';
   
-  const validViews: AppView[] = ['dashboard', 'daily', 'monthly', 'astrology', 'festivals', 'fasting', 'admin'];
+  const validViews: AppView[] = ['dashboard', 'daily', 'monthly', 'astrology', 'festivals', 'fasting', 'admin', 'about'];
   const activeView = validViews.includes(view as AppView) ? (view as AppView) : 'dashboard';
   
   let date = getCurrentISTDateString();
@@ -391,9 +392,32 @@ export default function App() {
                   </p>
                 </div>
 
+                {/* Option 5: About Us Section Button */}
+                <div id="about_us_row">
+                  <button
+                    onClick={() => navigateTo('about')}
+                    className="w-full bg-[#FCF8E3] border border-amber-300 rounded-2xl p-3 flex items-center justify-between shadow-sm hover:bg-amber-100/50 active:scale-[0.98] transition cursor-pointer"
+                    id="btn_to_about_us"
+                  >
+                    <div className="flex items-center space-x-2.5">
+                      <div className="w-6 h-6 bg-amber-600/10 rounded-full flex items-center justify-center border border-amber-300/30">
+                        <HelpCircle className="w-3.5 h-3.5 text-amber-800" />
+                      </div>
+                      <span className="text-[11px] font-black text-[#8A1A1A]">எங்களைப் பற்றி (About Us)</span>
+                    </div>
+                    <span className="text-[9px] font-bold text-amber-700 hover:underline">மேலும் அறிய &rarr;</span>
+                  </button>
+                </div>
+
                 {/* Bottom decorative segment */}
                 <div className="bg-[#FCF8E3] border border-amber-200 rounded-2xl py-3 flex justify-center items-center shadow-inner relative overflow-hidden group" id="decor_om_box">
                   <span className="text-2xl text-[#8A1A1A]/85 font-black group-hover:rotate-12 transition-transform duration-300 ease-out">🕉</span>
+                </div>
+
+                {/* Footer with version */}
+                <div className="text-center pt-2 pb-4 text-[10px] font-bold text-[#8A1A1A]/60 flex flex-col items-center space-y-1" id="mobile_dashboard_footer">
+                  <span>© 2026 தமிழ் நாள்காட்டி • பதிப்பு (Version) 1.0.1</span>
+                  <span>பராபவ வருடம் • பாரம்பரிய பஞ்சாங்கம்</span>
                 </div>
 
               </motion.div>
@@ -427,6 +451,12 @@ export default function App() {
             {activeView === 'fasting' && (
               <motion.div key="fasting_view" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="h-full flex flex-col overflow-hidden">
                 <FastingDaysView onSelectDay={handleSelectDay} onClose={() => navigateTo('dashboard')} />
+              </motion.div>
+            )}
+
+            {activeView === 'about' && (
+              <motion.div key="about_view" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="h-full flex flex-col overflow-hidden">
+                <AboutUsView onClose={() => navigateTo('dashboard')} />
               </motion.div>
             )}
 
@@ -589,6 +619,7 @@ export default function App() {
                   { id: 'astrology', label: 'ஜோதிடம்', desc: 'Astrology', icon: '🪐' },
                   { id: 'festivals', label: 'விடுமுறைகள்', desc: 'Festivals', icon: '🎉' },
                   { id: 'fasting', label: 'விரதங்கள்', desc: 'Fasting Days', icon: '🔔' },
+                  { id: 'about', label: 'எங்களைப் பற்றி', desc: 'About Us', icon: 'ℹ️' },
                 ].map((tab) => {
                   const isTabActive = activeView === tab.id;
                   return (
@@ -751,6 +782,12 @@ export default function App() {
                         <span className="text-3xl text-[#8A1A1A]/85 font-black group-hover:rotate-12 transition-transform duration-300 ease-out">🕉</span>
                       </div>
                     </div>
+
+                    {/* Desktop Footer with version */}
+                    <div className="text-center pt-6 pb-2 text-[11px] font-bold text-[#8A1A1A]/50 flex justify-between items-center border-t border-[#8A1A1A]/10 mt-6" id="desktop_dashboard_footer">
+                      <span>© 2026 தமிழ் பாரம்பரிய நாள்காட்டி • பராபவ வருடம்</span>
+                      <span>பதிப்பு (Version) 1.0.1 • Built with React & Tailwind</span>
+                    </div>
                   </motion.div>
                 )}
 
@@ -863,6 +900,12 @@ export default function App() {
                   </motion.div>
                 )}
 
+                {activeView === 'about' && (
+                  <motion.div key="desktop_about" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full">
+                    <AboutUsView onClose={() => navigateTo('dashboard')} />
+                  </motion.div>
+                )}
+
                 {activeView === 'admin' && (
                   <motion.div key="desktop_admin" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full">
                     <React.Suspense fallback={
@@ -915,7 +958,7 @@ export default function App() {
                 இது 2026 பராபவ & விஸ்வாவசு வருடத்திற்கான துல்லியமான தமிழ் நாள்காட்டி மற்றும் பஞ்சாங்கம் ஆகும். தினசரி நல்ல நேரம், ராகு காலம், எமகண்டம், திதி, நட்சத்திரம், பண்டிகைகள், விரத நாட்கள் மற்றும் கணினி ஜாதகங்களை எளிமையாகக் கணித்தலை இந்த இணையதளம் வழங்குகிறது.
               </p>
               <div className="mt-4 p-2 bg-white/70 border border-amber-200 rounded-xl text-left text-[10px] font-bold text-amber-900 leading-tight">
-                <p>• பதிப்பு (Version): 1.0.0 (பராபவ வருடம்)</p>
+                <p>• பதிப்பு (Version): 1.0.1 (பராபவ வருடம்)</p>
                 <p>• தொழில்நுட்பம்: React 19, Tailwind CSS v4, Motion</p>
                 <p>• தளம்: AI Studio Sandbox Space</p>
                 <button
