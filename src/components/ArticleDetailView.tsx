@@ -3,6 +3,7 @@ import { Calendar } from 'lucide-react';
 import { motion } from 'motion/react';
 import { navigateToRoute } from '../router';
 import { resolveArticleImageUrl } from './ArticlesView';
+import { apiFetchJson } from '../utils/apiFetch';
 
 interface Category {
   id: number;
@@ -37,21 +38,18 @@ export default function ArticleDetailView({ articleSlug, onClose }: { articleSlu
     fetchArticle();
   }, [articleSlug]);
 
-  const fetchArticle = async () => {
+  const fetchArticle = async (force = false) => {
     try {
       const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
-      const res = await fetch(`${apiBase}/articles/${encodeURIComponent(articleSlug)}`);
-      if (res.ok) {
-        const data = await res.json();
-        setArticle(data);
-      } else if (res.status === 404) {
-        setError('not-found');
-      } else {
-        setError('load-failed');
-      }
-    } catch (error) {
+      // De-duplicated: both mounted frames share one request.
+      const data = await apiFetchJson(
+        `${apiBase}/articles/${encodeURIComponent(articleSlug)}`,
+        { force }
+      );
+      setArticle(data);
+    } catch (error: any) {
       console.error('Error fetching article:', error);
-      setError('load-failed');
+      setError(error?.status === 404 ? 'not-found' : 'load-failed');
     } finally {
       setLoading(false);
     }
@@ -86,7 +84,7 @@ export default function ArticleDetailView({ articleSlug, onClose }: { articleSlu
           </div>
           <div className="flex items-center space-x-2">
             <button
-              onClick={fetchArticle}
+              onClick={() => fetchArticle(true)}
               className="px-4 py-2 bg-[#8A1A1A] text-[#FDF6E2] text-xs font-bold rounded-xl hover:bg-[#6d1414] transition cursor-pointer"
             >
               மீண்டும் முயல்க

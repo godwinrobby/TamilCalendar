@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, BookOpen, Calendar, ChevronRight } from 'lucide-react';
 import { motion } from 'motion/react';
 import { AppView, navigateToRoute } from '../router';
+import { apiFetchJson } from '../utils/apiFetch';
 
 interface Category {
   id: number;
@@ -58,8 +59,8 @@ export default function ArticlesView({ onClose }: { onClose: () => void }) {
   const fetchArticles = async () => {
     try {
       const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
-      const res = await fetch(`${apiBase}/articles`);
-      const result = await res.json();
+      // De-duplicated: both mounted frames share one request.
+      const result = await apiFetchJson(`${apiBase}/articles`);
       if (result.categories && result.articles) {
         setData(result);
         if (result.categories.length > 0 && !selectedCategory) {

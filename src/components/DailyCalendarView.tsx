@@ -3,10 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
-import { getTamilCalendarInfo, getCurrentISTDateString, getRasiPalanForDate, DAILY_RASI_PALAN } from '../utils/tamilCalendar';
+import React, { useState, useEffect } from 'react';
+import { getCurrentISTDateString, getRasiPalanForDate, DAILY_RASI_PALAN, TAMIL_WEEKDAYS } from '../utils/tamilCalendar';
 import { Calendar, ChevronLeft, ChevronRight, Award, Flame, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { navigateToRoute } from '../router';
+import { apiFetchJson } from '../utils/apiFetch';
+import { getPhaseArrowIcon, getSpecialSymbolIcon, getMoonDetailsIcon, getSymbolIcon } from '../utils/assetIcons';
 
 const RASI_SYMBOLS: Record<string, string> = {
   'மேஷம்': '♈',
@@ -44,32 +47,134 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
     }
   }, [initialDate]);
 
-  const calendarInfo = getTamilCalendarInfo(selectedDateStr);
+  const [apiRecord, setApiRecord] = useState<Record<string, any> | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  // Fetch ONLY from the production API for the selected date
+  React.useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+    setLoadError(null);
+    setApiRecord(null);
+
+    const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
+    // De-duplicated with App.tsx ensureDateInCache for the same date —
+    // only one network request is made even with both frames mounted.
+    apiFetchJson(`${apiBase}/calendar?date=${encodeURIComponent(selectedDateStr)}`, {
+      decodeTamilEscapes: true,
+    })
+      .then((result) => {
+        if (!cancelled) {
+          if (result.success && result.data && result.data[selectedDateStr]) {
+            setApiRecord(result.data[selectedDateStr]);
+          } else {
+            setApiRecord(null);
+            setLoadError('No calendar data available from API for this date.');
+          }
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          console.error('Error fetching daily calendar from API:', err);
+          setLoadError('Unable to load calendar data from server.');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedDateStr]);
+
+  // Map all data directly from API
+  const calendarInfo = apiRecord || {
+    englishDate: selectedDateStr,
+    tamilYear: '',
+    tamilMonth: '',
+    tamilDay: 0,
+    dayOfWeek: '',
+    thithi: '',
+    nakshatram: '',
+    yogam: '',
+    nallaNeram: { morning: '', evening: '' },
+    gowriNallaNeram: { morning: '', evening: '' },
+    raghuKalam: '',
+    yamagandam: '',
+    kuligai: '',
+    soolam: '',
+    parigaram: '',
+    isAuspicious: false,
+    festivals: [],
+    nextNakshatram: '',
+    nextThithi: '',
+    chandrashtamam: '',
+    nakshatramTime: '',
+    thithiTime: '',
+    phaseArrow: 'up',
+    isPradosham: false,
+    isMaranaYogam: false,
+    specialSymbols: '',
+    moonDetails: '',
+    symbols: '',
+  };
+
+  if (isLoading) {
+    return (
+      <div className="p-6">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex flex-col items-center justify-center py-16"
+        >
+          <div className="relative w-16 h-16 mb-4">
+            <div className="absolute inset-0 border-4 border-amber-200 rounded-full"></div>
+            <div className="absolute inset-0 border-4 border-amber-600 border-t-transparent rounded-full animate-spin"></div>
+            <div className="absolute inset-0 flex items-center justify-center text-2xl">🕉</div>
+          </div>
+          <motion.p
+            animate={{ opacity: [0.4, 1, 0.4] }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+            className="text-sm font-black text-[#8A1A1A] tracking-wide"
+          >
+            காலண்டர் ஏற்றப்படுகிறது...
+          </motion.p>
+          <p className="text-[11px] text-[#8A1A1A]/70 mt-1 font-medium">Loading calendar from server...</p>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (loadError || !apiRecord) {
+    return (
+      <div className="p-6">
+        <div className="text-center py-10 text-gray-500">
+          {loadError || 'No calendar data available.'}
+        </div>
+      </div>
+    );
+  }
 
   const getFormattedNakshatram = () => {
     const nak = calendarInfo.nakshatram || '';
-    let timePrefix = '';
-    if (!nak.includes('இன்று') && !nak.includes('வரை') && !nak.includes('முழுவதும்') && calendarInfo.nakshatramTime) {
-      timePrefix = calendarInfo.nakshatramTime + ' ';
-    }
     let suffix = '';
     if (!nak.includes('பின்பு') && calendarInfo.nextNakshatram) {
       suffix = ' பின்பு ' + calendarInfo.nextNakshatram;
     }
-    return timePrefix + nak + suffix;
+    return nak + suffix;
   };
 
   const getFormattedThithi = () => {
     const th = calendarInfo.thithi || '';
-    let timePrefix = '';
-    if (!th.includes('இன்று') && !th.includes('வரை') && !th.includes('முழுவதும்') && calendarInfo.thithiTime) {
-      timePrefix = calendarInfo.thithiTime + ' ';
-    }
     let suffix = '';
     if (!th.includes('பின்பு') && calendarInfo.nextThithi) {
       suffix = ' பின்பு ' + calendarInfo.nextThithi;
     }
-    return timePrefix + th + suffix;
+    return th + suffix;
   };
 
   const splitTimeValue = (val: string) => {
@@ -85,36 +190,46 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
   };
 
   const changeDate = (offset: number) => {
-    const currentDate = new Date(selectedDateStr + 'T00:00:00Z');
-    currentDate.setUTCDate(currentDate.getUTCDate() + offset);
+    const currentDate = new Date(selectedDateStr + 'T00:00:00');
+    currentDate.setDate(currentDate.getDate() + offset);
     setDirection(offset > 0 ? 'right' : 'left');
-    const newDateStr = currentDate.toISOString().split('T')[0];
+    const year = currentDate.getFullYear();
+    const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+    const day = String(currentDate.getDate()).padStart(2, '0');
+    const newDateStr = `${year}-${month}-${day}`;
     setSelectedDateStr(newDateStr);
-    window.location.hash = `#/daily?date=${newDateStr}`;
+    navigateToRoute('daily', newDateStr);
   };
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const dateVal = e.target.value;
     if (dateVal) {
-      const isLater = new Date(dateVal + 'T00:00:00Z').getTime() > new Date(selectedDateStr + 'T00:00:00Z').getTime();
+      const isLater = new Date(dateVal + 'T00:00:00').getTime() > new Date(selectedDateStr + 'T00:00:00').getTime();
       setDirection(isLater ? 'right' : 'left');
       setSelectedDateStr(dateVal);
-      window.location.hash = `#/daily?date=${dateVal}`;
+      navigateToRoute('daily', dateVal);
     }
   };
 
   // Convert English Month to Tamil name for header
   const getEngMonthInTamil = (dateStr: string) => {
-    const d = new Date(dateStr + 'T00:00:00Z');
+    const d = new Date(dateStr + 'T00:00:00');
     const months = [
       'ஜனவரி', 'பிப்ரவரி', 'மார்ச்', 'ஏப்ரல்', 'மே', 'ஜூன்',
       'ஜூலை', 'ஆகஸ்ட்', 'செப்டம்பர்', 'அக்டோபர்', 'நவம்பர்', 'டிசம்பர்'
     ];
-    return months[d.getUTCMonth()];
+    return months[d.getMonth()];
   };
 
-  const engDay = new Date(selectedDateStr + 'T00:00:00Z').getUTCDate();
-  const engYear = new Date(selectedDateStr + 'T00:00:00Z').getUTCFullYear();
+  // Get Tamil day of week
+  const getTamilDayOfWeek = (dateStr: string): string => {
+    const d = new Date(dateStr + 'T00:00:00');
+    const weekdayIndex = d.getDay();
+    return TAMIL_WEEKDAYS[weekdayIndex];
+  };
+
+  const engDay = new Date(selectedDateStr + 'T00:00:00').getDate();
+  const engYear = new Date(selectedDateStr + 'T00:00:00').getFullYear();
 
   // Animation variants for torn calendar page slide
   const slideVariants = {
@@ -127,29 +242,29 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
       x: 0,
       opacity: 1,
       rotateY: 0,
-      transition: { duration: 0.3, ease: 'easeOut' }
+      transition: { duration: 0.3, ease: 'easeOut' as const }
     },
     exit: (dir: 'left' | 'right') => ({
       x: dir === 'right' ? -300 : 300,
       opacity: 0,
       rotateY: dir === 'right' ? -35 : 35,
-      transition: { duration: 0.3, ease: 'easeIn' }
+      transition: { duration: 0.3, ease: 'easeIn' as const }
     })
   };
 
-  // Determine the primary sheet title (prioritize festivals, fall back to Thithi)
-  const mainSheetTitle = calendarInfo.festivals.length > 0 
-    ? calendarInfo.festivals[0].split(' (')[0]
-    : calendarInfo.thithi;
+  // Determine the primary sheet title only from specialToday
+  const specialTodayRaw = apiRecord?.specialToday || '';
+  const mainSheetTitle = specialTodayRaw.trim() ? specialTodayRaw.split(/[,;\n]+/)[0].trim() : '';
 
   return (
     <div className="h-full flex flex-col overflow-hidden bg-[#FFFDF0] text-[#5C1A1A] font-sans" id="daily_calendar_container">
       {/* Scrollable Body */}
       <div className="flex-grow overflow-y-auto pb-24 scrollbar-thin flex flex-col" id="daily_scroll_body">
 
-      {/* 1. COMPACT TOP CONTROLS BAR */}
-      <div className="max-w-md md:max-w-lg w-full mx-auto px-4 mt-3" id="navigation_controls">
-        <div className="flex items-center justify-between bg-amber-100/60 p-1.5 rounded-2xl border border-amber-200/80 shadow-sm">
+      {/* 1. THE MODERN REDESIGNED DATE HEADER CARD WITH BUILT-IN CONTROLS */}
+      <div className="w-full max-w-md md:max-w-lg mx-auto px-4 mt-3 relative overflow-hidden flex-shrink-0" id="sheet_container" style={{ perspective: 1200 }}>
+        {/* Date Picker + Navigation integrated into header */}
+        <div className="flex items-center justify-between bg-gradient-to-r from-[#8A1A1A]/5 to-amber-50/80 p-1.5 rounded-2xl border border-amber-200/80 shadow-sm mb-2" id="navigation_controls">
           <button 
             onClick={() => changeDate(-1)} 
             className="p-1.5 bg-[#8A1A1A] text-[#FDF6E2] rounded-full hover:bg-[#A32222] active:scale-95 transition cursor-pointer"
@@ -169,7 +284,30 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
               min="2026-01-01"
               max="2026-12-31"
               id="datepicker_input"
+              style={{ 
+                colorScheme: 'light', 
+                fontSize: '11px',
+                width: '0px',
+                position: 'absolute',
+                opacity: '0'
+              }}
             />
+            <span 
+              className="cursor-pointer text-xs font-bold text-[#5C1A1A] font-mono"
+              onClick={(e) => {
+                const dateInput = document.getElementById('datepicker_input') as HTMLInputElement;
+                if (dateInput) {
+                  dateInput.showPicker?.();
+                }
+              }}
+            >
+              {(() => {
+                const [year, month, day] = selectedDateStr.split('-');
+                const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                const monthName = monthNames[parseInt(month) - 1];
+                return `${monthName}-${parseInt(day)}-${year}`;
+              })()}
+            </span>
           </div>
 
           <button 
@@ -181,10 +319,8 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
             <ChevronRight className="w-5 h-5" />
           </button>
         </div>
-      </div>
 
-      {/* 2. THE HIGH-FIDELITY TRADITIONAL DAILY SHEET */}
-      <div className="w-full max-w-md md:max-w-lg mx-auto px-4 mt-3 relative overflow-hidden flex-shrink-0" id="sheet_container" style={{ perspective: 1200 }}>
+        
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={selectedDateStr}
@@ -199,16 +335,52 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
             onDragEnd={(_event, info) => {
               const swipeThreshold = 50;
               if (info.offset.x > swipeThreshold) {
-                // Swipe right -> Show previous day
                 changeDate(-1);
               } else if (info.offset.x < -swipeThreshold) {
-                // Swipe left -> Show next day
                 changeDate(1);
               }
             }}
             className="w-full bg-[#FFFFFF] border-t-8 border-x-2 border-b-[6px] border-[#8A1A1A] rounded-2xl shadow-xl overflow-hidden relative flex flex-col min-h-[480px] flex-shrink-0 cursor-grab active:cursor-grabbing touch-pan-y selection:bg-transparent"
             id={`sheet_card_${selectedDateStr}`}
           >
+              <div className='px-4 py-3'>
+            <div className="flex items-stretch gap-2">
+                {/* Left: Gregorian */}
+                <div className="flex-1 bg-white rounded-xl border border-amber-200 overflow-hidden shadow-sm">
+                  <div className="bg-[#8A1A1A] px-2 py-1">
+                    <span className="text-[9px] font-bold text-amber-200 uppercase tracking-wider text-center block">ஆங்கிலம்</span>
+                  </div>
+                  <div className="flex flex-col items-center justify-center py-3">
+                    <span className="text-3xl font-black text-[#8A1A1A] leading-none">{engDay}</span>
+                    <span className="text-[10px] font-bold text-amber-800 mt-1 text-center">{getEngMonthInTamil(selectedDateStr)}</span>
+                    <span className="text-[10px] font-bold text-gray-500 text-center">{engYear}</span>
+                  </div>
+                  <div className="bg-gradient-to-r from-[#8A1A1A] to-[#D97706] px-2 py-1.5">
+                    <span className="text-[10px] font-black text-white text-center block">{getTamilDayOfWeek(selectedDateStr)}</span>
+                  </div>
+                </div>
+
+                {/* Separator */}
+                <div className="flex items-center">
+                  <div className="w-0.5 h-12 bg-gradient-to-b from-amber-400 to-transparent rounded-full"></div>
+                </div>
+
+                {/* Right: Tamil */}
+                <div className="flex-1 bg-white rounded-xl border border-amber-300 overflow-hidden shadow-sm">
+                  <div className="bg-amber-700 px-2 py-1">
+                    <span className="text-[9px] font-bold text-amber-100 uppercase tracking-wider text-center block">தமிழ்</span>
+                  </div>
+                  <div className="flex flex-col items-center justify-center py-3">
+                    <span className="text-sm font-black text-amber-900 leading-none text-center">{calendarInfo.tamilMonth}</span>
+                    <span className="text-3xl font-black text-[#D97706] leading-none mt-1 text-center">{calendarInfo.tamilDay}</span>
+                    <span className="text-[9px] font-bold text-amber-700 mt-0.5 text-center">{calendarInfo.tamilYear}</span>
+                  </div>
+                  <div className="bg-gradient-to-r from-[#7C2D12] to-[#D97706] px-2 py-1.5">
+                    <span className="text-[10px] font-black text-white text-center block">{getTamilDayOfWeek(selectedDateStr)}</span>
+                  </div>
+                </div>
+              </div>
+              </div>
             {/* Tear line effect decoration */}
             <div className="absolute top-0 left-0 right-0 h-1 bg-[#8A1A1A]/20 flex justify-around items-end overflow-hidden">
               {[...Array(12)].map((_, i) => (
@@ -216,22 +388,15 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
               ))}
             </div>
 
-            {/* Top Sheet Header with Special Title centered (Exactly as per image) */}
+            {/* Top Sheet Header */}
             <div className="text-center pt-5 pb-3 border-b-2 border-[#8A1A1A] px-4" id="sheet_card_header">
               <h2 className="text-lg md:text-xl font-extrabold text-[#8A1A1A] tracking-normal flex items-center justify-center gap-2" id="main_sheet_title">
-                {calendarInfo.specialSymbols && (
-                  <span className="text-xl animate-pulse" title="சிறப்புக் குறியீடு">{calendarInfo.specialSymbols}</span>
-                )}
-                <span>{mainSheetTitle}</span>
-                {calendarInfo.specialSymbols && (
-                  <span className="text-xl animate-pulse" title="சிறப்புக் குறியீடு">{calendarInfo.specialSymbols}</span>
-                )}
+                <span>{mainSheetTitle}</span>                
               </h2>
             </div>
-
-            {/* Symbolic Indicators Row (Exactly as per image) */}
+            
+            {/* Symbolic Indicators Row */}
             <div className="flex justify-between items-center px-5 py-2.5 bg-amber-50/25 border-b border-[#8A1A1A]/10" id="symbolic_indicators_row">
-              {/* Left side: Ban / Yoga indicator */}
               <div className="flex items-center" id="ban_indicator_box">
                 {calendarInfo.isMaranaYogam ? (
                   <div className="relative group cursor-help text-red-600" title="மரண யோகம் - சுப காரியங்களை தவிர்க்கவும்">
@@ -250,93 +415,51 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
                 )}
               </div>
 
-              {/* Right side: Bull, Crescent moon, Arrow */}
-              <div className="flex items-center space-x-3.5" id="right_indicators_box">
-                {/* Lying Bull / Nandi (Pradosham indicator) */}
-                <div 
-                  className={`cursor-help transition ${calendarInfo.isPradosham ? 'text-amber-700' : 'text-[#8A1A1A]/40'}`}
-                  title={calendarInfo.isPradosham ? "பிரதோஷம் - நந்தி வழிபாடு சிறப்பு" : "சிவ வழிபாடு உகந்தது"}
-                >
-                  <svg className="w-8 h-8 fill-current" viewBox="0 0 24 24">
-                    <path d="M19.5 15.5c-.3 0-.6-.1-.9-.2-.5-.2-.9-.7-.9-1.3v-1.5c0-.8-.7-1.5-1.5-1.5h-1c-.4-1-1.3-1.8-2.4-2.1V7.5c0-.8-.7-1.5-1.5-1.5H10c-.8 0-1.5.7-1.5 1.5v1.4c-1.1.3-2 1.1-2.4 2.1h-1C4.3 11 3.6 11.7 3.6 12.5v1.5c0 .6-.4 1.1-.9 1.3-.3.1-.6.2-.9.2h-.3c-.3 0-.5.2-.5.5v1c0 1.1.9 2 2 2h17c1.1 0 2-.9 2-2v-1c0-.3-.2-.5-.5-.5h-.3z" />
-                  </svg>
-                </div>
-
-                {/* Crescent Moon with face */}
-                <div className="cursor-help text-[#8A1A1A]" title="சந்திர தசை">
-                  <svg className="w-7 h-7 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="1.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
-                    <circle cx="9.5" cy="11.5" r="0.75" fill="currentColor" />
-                    <path d="M9 14.5c.3.4.9.4 1.2 0" strokeLinecap="round" />
-                  </svg>
-                </div>
-
-                {/* Bold Red/Blue thick arrow */}
-                <div 
-                  className="cursor-help" 
-                  title={calendarInfo.phaseArrow === 'up' ? "வளர்பிறை காலம்" : "தேய்பிறை காலம்"}
-                >
-                  {calendarInfo.phaseArrow === 'up' ? (
-                    <svg className="w-5 h-7 text-red-700 fill-current" viewBox="0 0 24 24">
-                      <path d="M11 20V8.414l-4.293 4.293-1.414-1.414L12 4.586l6.707 6.707-1.414 1.414L13 8.414V20h-2z" />
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-7 text-blue-700 fill-current" viewBox="0 0 24 24">
-                      <path d="M13 4v11.586l4.293-4.293 1.414 1.414L12 19.414l-6.707-6.707 1.414-1.414L11 15.586V4h2z" />
-                    </svg>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Traditional Date Banner Section (Exactly as per image) */}
-            <div className="bg-[#FFFDF5] px-5 py-4 border-b-2 border-[#8A1A1A]/10" id="traditional_date_banner_section">
-              {/* Top Meta Details Row */}
-              <div className="flex items-center justify-between text-center pb-2.5" id="traditional_header_metadata">
-                {/* Left Side: Tamil Year */}
-                <div className="flex flex-col items-start leading-none" id="meta_tamil_year">
-                  <span className="text-[9px] md:text-[10px] font-bold tracking-wider text-amber-800/80">தமிழ் வருடம்</span>
-                  <span className="text-xs md:text-sm font-extrabold text-[#8A1A1A] mt-1">{calendarInfo.tamilYear} வருடம்</span>
-                </div>
-
-                {/* Center Badge: Gregorian Year + Tamil Year Pill */}
-                <div className="bg-amber-100/75 border border-amber-300 px-3.5 py-1 rounded-full text-[11px] font-black text-amber-900 shadow-sm" id="meta_center_pill">
-                  {engYear} {calendarInfo.tamilYear}
-                </div>
-
-                {/* Right Side: Day Of Week */}
-                <div className="flex flex-col items-end leading-none" id="meta_day_of_week">
-                  <span className="text-[9px] md:text-[10px] font-bold tracking-wider text-amber-800/80">கிழமை</span>
-                  <span className="text-xs md:text-sm font-extrabold text-[#8A1A1A] mt-1">{calendarInfo.dayOfWeek}</span>
-                </div>
-              </div>
-
-              {/* Dotted Divider */}
-              <div className="border-t-2 border-dashed border-[#8A1A1A]/20 w-full my-2.5"></div>
-
-              {/* Gregorian and Tamil Dates side-by-side with Vertical Divider */}
-              <div className="flex items-center justify-center space-x-3.5 md:space-x-5 py-2" id="traditional_date_cards_container">
-                {/* Left Card: Gregorian Day */}
-                <div className="w-[145px] md:w-[175px] h-[110px] md:h-[130px] bg-[#FFFCE8] border-2 border-[#8A1A1A] rounded-2xl flex flex-col items-center justify-center shadow-sm" id="card_gregorian">
-                  <span className="text-4xl md:text-5xl font-black text-[#8A1A1A] tracking-tight leading-none">{engDay}</span>
-                  <span className="text-[10px] md:text-xs font-bold text-amber-950 mt-2.5 uppercase text-center tracking-wide">
-                    {getEngMonthInTamil(selectedDateStr)} {engYear}
-                  </span>
-                </div>
-
-                {/* Vertical Divider Line */}
-                <div className="w-[1.5px] bg-amber-500/20 h-20 self-center" id="card_vertical_divider"></div>
-
-                {/* Right Card: Tamil Month & Tamil Day */}
-                <div className="w-[145px] md:w-[175px] h-[110px] md:h-[130px] bg-[#FFFCE8] border-2 border-amber-400 rounded-2xl flex flex-col items-center justify-center shadow-sm" id="card_tamil">
-                  <span className="text-[9px] md:text-[10px] font-bold text-amber-800 uppercase tracking-wider">தமிழ் மாதம்</span>
-                  <span className="text-2xl md:text-3xl font-black text-[#8A1A1A] tracking-tight mt-1 leading-none">
-                    {calendarInfo.tamilMonth}
-                  </span>
-                  <span className="text-2xl md:text-3xl font-black text-[#D97706] tracking-tight mt-1.5 leading-none">
-                    {calendarInfo.tamilDay}
-                  </span>
-                </div>
+              <div className="flex items-center space-x-4" id="right_indicators_box">
+                {/* Special Symbols Icon - Multiple icons if pipe-separated */}
+                {calendarInfo.specialSymbols && getSpecialSymbolIcon(calendarInfo.specialSymbols).length > 0 && (
+                  <div className="flex items-center space-x-2">
+                    {getSpecialSymbolIcon(calendarInfo.specialSymbols).map((iconPath, index) => (
+                      <div 
+                        key={index}
+                        className="cursor-help" 
+                        title={calendarInfo.specialSymbols}
+                      >
+                        <img 
+                          src={iconPath} 
+                          alt={calendarInfo.specialSymbols}
+                          className="w-11 h-11 object-contain"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {/* Moon Details Icon */}
+                {calendarInfo.moonDetails && (
+                  <div 
+                    className="cursor-help" 
+                    title={calendarInfo.moonDetails}
+                  >
+                    <img 
+                      src={getMoonDetailsIcon(calendarInfo.moonDetails)} 
+                      alt={calendarInfo.moonDetails}
+                      className="w-11 h-11 object-contain"
+                    />
+                  </div>
+                )}
+                {/* Symbols Icon */}
+                {calendarInfo.symbols && (
+                  <div 
+                    className="cursor-help" 
+                    title={calendarInfo.symbols}
+                  >
+                    <img 
+                      src={getSymbolIcon(calendarInfo.symbols)} 
+                      alt={calendarInfo.symbols}
+                      className="w-11 h-11 object-contain"
+                    />
+                  </div>
+                )}
               </div>
             </div>
 
@@ -433,10 +556,10 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
               </div>
               
               {(() => {
-                const nm = splitTimeValue(calendarInfo.nallaNeram.morning || 'காலை 07:30 - 09:00');
-                const ne = splitTimeValue(calendarInfo.nallaNeram.evening || 'மாலை 04:30 - 06:00');
-                const gnm = splitTimeValue(calendarInfo.gowriNallaNeram.morning || 'காலை 10:30 - 12:00');
-                const gne = splitTimeValue(calendarInfo.gowriNallaNeram.evening || 'மாலை 07:30 - 09:00');
+                const nmTime = (calendarInfo.nallaNeramMorning || calendarInfo.nallaNeram?.morning || '').trim();
+                const neTime = (calendarInfo.nallaNeramEvening || calendarInfo.nallaNeram?.evening || '').trim();
+                const gnmTime = (calendarInfo.gowriMorning || calendarInfo.gowriNallaNeram?.morning || '').trim();
+                const gneTime = (calendarInfo.gowriEvening || calendarInfo.gowriNallaNeram?.evening || '').trim();
 
                 return (
                   <div className="p-4 grid grid-cols-1 gap-3" id="timing_grids">
@@ -449,15 +572,13 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
                         <div className="flex justify-between items-center">
                           <span className="text-[#475569] font-bold">காலை:</span>
                           <div className="text-right leading-tight">
-                            <span className="text-[#8A1A1A] font-black text-[11px] block">{nm.period}</span>
-                            <span className="text-[#8A1A1A] font-black text-xs">{nm.time}</span>
+                            <span className="text-[#8A1A1A] font-black text-xs">{nmTime || '−'}</span>
                           </div>
                         </div>
                         <div className="flex justify-between items-center border-t border-[#F1F5F9] pt-2">
                           <span className="text-[#475569] font-bold">மாலை:</span>
                           <div className="text-right leading-tight">
-                            <span className="text-[#8A1A1A] font-black text-[11px] block">{ne.period}</span>
-                            <span className="text-[#8A1A1A] font-black text-xs">{ne.time}</span>
+                            <span className="text-[#8A1A1A] font-black text-xs">{neTime || '−'}</span>
                           </div>
                         </div>
                       </div>
@@ -472,15 +593,13 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
                         <div className="flex justify-between items-center">
                           <span className="text-[#475569] font-bold">காலை:</span>
                           <div className="text-right leading-tight">
-                            <span className="text-[#8A1A1A] font-black text-[11px] block">{gnm.period}</span>
-                            <span className="text-[#8A1A1A] font-black text-xs">{gnm.time}</span>
+                            <span className="text-[#8A1A1A] font-black text-xs">{gnmTime || '−'}</span>
                           </div>
                         </div>
                         <div className="flex justify-between items-center border-t border-[#F1F5F9] pt-2">
                           <span className="text-[#475569] font-bold">மாலை:</span>
                           <div className="text-right leading-tight">
-                            <span className="text-[#8A1A1A] font-black text-[11px] block">{gne.period}</span>
-                            <span className="text-[#8A1A1A] font-black text-xs">{gne.time}</span>
+                            <span className="text-[#8A1A1A] font-black text-xs">{gneTime || '−'}</span>
                           </div>
                         </div>
                       </div>
@@ -510,7 +629,7 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
                       <div className="bg-[#FDF2F2] border border-[#FEE2E2] rounded-2xl p-3 flex justify-between items-center" id="box_raghu_kalam">
                         <span className="text-[#991B1B] font-black text-xs md:text-sm">ராகுகாலம்:</span>
                         <div className="text-right leading-tight">
-                          <span className="text-[#991B1B] font-black text-[11px] block">{rk.period}</span>
+                          <span className="text-[#991B1B] font-black text-xs md:text-sm mr-1">{rk.period}</span>
                           <span className="text-slate-800 font-black text-xs md:text-sm">{rk.time}</span>
                         </div>
                       </div>
@@ -519,7 +638,7 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
                       <div className="bg-[#FDF2F2] border border-[#FEE2E2] rounded-2xl p-3 flex justify-between items-center" id="box_yamagandam">
                         <span className="text-[#991B1B] font-black text-xs md:text-sm">எமகண்டம்:</span>
                         <div className="text-right leading-tight">
-                          <span className="text-[#991B1B] font-black text-[11px] block">{yg.period}</span>
+                          <span className="text-[#991B1B] font-black text-xs md:text-sm mr-1">{yg.period}</span>
                           <span className="text-slate-800 font-black text-xs md:text-sm">{yg.time}</span>
                         </div>
                       </div>
@@ -528,7 +647,7 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
                       <div className="bg-[#FDF2F2] border border-[#FEE2E2] rounded-2xl p-3 flex justify-between items-center" id="box_kuligai">
                         <span className="text-[#991B1B] font-black text-xs md:text-sm">குளிகை:</span>
                         <div className="text-right leading-tight">
-                          <span className="text-[#991B1B] font-black text-[11px] block">{kg.period}</span>
+                          <span className="text-[#991B1B] font-black text-xs md:text-sm mr-1">{kg.period}</span>
                           <span className="text-slate-800 font-black text-xs md:text-sm">{kg.time}</span>
                         </div>
                       </div>
@@ -561,42 +680,41 @@ export default function DailyCalendarView({ initialDate, onClose }: DailyCalenda
               </div>
 
               <div className="p-4 grid grid-cols-1 gap-3" id="rasi_predictions_grid">
-                {Object.keys(DAILY_RASI_PALAN).map((r) => {
-                  const rasiData = getRasiPalanForDate(selectedDateStr, r);
-                  const rasiName = rasiData.rasi;
-                  const emojiSymbol = RASI_SYMBOLS[rasiName] || '☸️';
+                {[
+                  { key: 'மேஷம்', label: 'மேஷம்', symbol: '♈' },
+                  { key: 'ரிஷபம்', label: 'ரிஷபம்', symbol: '♉' },
+                  { key: 'மிதுனம்', label: 'மிதுனம்', symbol: '♊' },
+                  { key: 'கடகம்', label: 'கடகம்', symbol: '♋' },
+                  { key: 'சிம்மம்', label: 'சிம்மம்', symbol: '♌' },
+                  { key: 'கன்னி', label: 'கன்னி', symbol: '♍' },
+                  { key: 'துலாம்', label: 'துலாம்', symbol: '♎' },
+                  // { key: 'விர்சிகம்', label: 'விருச்சிகம்', symbol: '♏' },
+                  { key: 'தனுசு', label: 'தனுசு', symbol: '♐' },
+                  { key: 'மகரம்', label: 'மகரம்', symbol: '♑' },
+                  { key: 'கும்பம்', label: 'கும்பம்', symbol: '♒' },
+                  { key: 'மீனம்', label: 'மீனம்', symbol: '♓' },
+                ].map((rasi) => {
+                  const prediction = calendarInfo[rasi.key] || '';
+                  const emojiSymbol = RASI_SYMBOLS[rasi.label] || '☸️';
 
-                  const getStatusBadge = (status: string) => {
-                    if (status === 'Excellent') {
+                  const getStatusBadge = (pred: string) => {
+                    if (pred.includes('சிறப்பு') || pred.includes('அதிர்ஷ்டம்') || pred.includes('வெற்றி') || pred.includes('லாபம்')) {
                       return <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] font-bold px-1.5 py-0.5 rounded-full">மிகச் சிறப்பு</span>;
-                    } else if (status === 'Good') {
-                      return <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[9px] font-bold px-1.5 py-0.5 rounded-full">நன்று</span>;
+                    } else if (pred.includes('கவனம்') || pred.includes('நிதானம்') || pred.includes('தவிர்க்கவும்') || pred.includes('அலைச்சல்')) {
+                      return <span className="bg-amber-50 text-amber-700 border border-amber-200 text-[9px] font-bold px-1.5 py-0.5 rounded-full">சாதாரண நாள்</span>;
                     }
-                    return <span className="bg-amber-50 text-amber-700 border border-amber-200 text-[9px] font-bold px-1.5 py-0.5 rounded-full">சாதாரண நாள்</span>;
-                  };
-
-                  const getRatingStars = (rating: number) => {
-                    return [...Array(5)].map((_, i) => (
-                      <span key={i} className={`text-[10px] ${i < rating ? 'text-amber-500' : 'text-gray-200'}`}>★</span>
-                    ));
+                    return <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[9px] font-bold px-1.5 py-0.5 rounded-full">நன்று</span>;
                   };
 
                   return (
-                    <div key={r} className="bg-white border border-amber-100/80 rounded-xl p-3 shadow-sm hover:shadow-md transition duration-200 space-y-1.5 flex flex-col justify-between" id={`rasi_card_${rasiName}`}>
+                    <div key={rasi.key} className="bg-white border border-amber-100/80 rounded-xl p-3 shadow-sm hover:shadow-md transition duration-200 space-y-1.5 flex flex-col justify-between" id={`rasi_card_${rasi.label}`}>
                       <div className="flex items-center justify-between border-b border-amber-50/50 pb-1">
                         <div className="flex items-center space-x-1.5">
                           <span className="text-sm">{emojiSymbol}</span>
-                          <span className="font-extrabold text-xs text-[#8A1A1A]">{rasiName}</span>
-                        </div>
-                        {getStatusBadge(rasiData.status)}
-                      </div>
-                      <p className="text-[11px] text-[#5C1A1A] font-medium leading-relaxed flex-grow">
-                        {rasiData.prediction}
-                      </p>
-                      <div className="flex items-center justify-between pt-1 border-t border-dashed border-amber-50">
-                        <span className="text-[9px] text-amber-800/80 font-bold">இன்றைய பலன்:</span>
-                        <div className="flex">{getRatingStars(rasiData.rating)}</div>
-                      </div>
+                          <span className="font-extrabold text-xs text-[#8A1A1A]">{rasi.label}</span>
+                          <span className="text-xs text-[#8A1A1A]">: {prediction || '-'}</span>
+                        </div>                        
+                      </div>                      
                     </div>
                   );
                 })}

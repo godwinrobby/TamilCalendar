@@ -3,10 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { getTamilCalendarInfo, TAMIL_MONTHS, getTamilMonthAndDay, getThithiForDate, getISTDateComponents } from '../utils/tamilCalendar';
+import { getSpecialSymbolIcon } from '../utils/assetIcons';
 import { ChevronLeft, ChevronRight, Calendar, ArrowUpRight, Flame, Moon, Sun, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { apiFetchJson } from '../utils/apiFetch';
 import { TamilDateInfo } from '../types';
 
 interface MonthlyCalendarViewProps {
@@ -19,6 +21,41 @@ export default function MonthlyCalendarView({ onSelectDay, onClose }: MonthlyCal
   const [currentYear, setCurrentYear] = useState(istComps.year);
   const [currentMonth, setCurrentMonth] = useState(istComps.month); 
   const [selectedDayInfo, setSelectedDayInfo] = useState<TamilDateInfo | null>(null);
+  const [calendarRecords, setCalendarRecords] = useState<Record<string, any>>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+    setLoadError(null);
+
+    const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
+    // De-duplicated with the App.tsx mount sync (same URL) — one request.
+    apiFetchJson(`${apiBase}/calendar`, { decodeTamilEscapes: true })
+      .then((result) => {
+        if (!cancelled && result.success && result.data) {
+          setCalendarRecords(result.data);
+        } else if (!cancelled) {
+          setLoadError('No calendar data available from API.');
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          console.error('Error fetching monthly calendar from API:', err);
+          setLoadError('Unable to load calendar data from server.');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const monthNamesEnglish = [
     'January (ஜனவரி)', 'February (பிப்ரவரி)', 'March (மார்ச்)', 'April (ஏப்ரல்)',
@@ -31,12 +68,12 @@ export default function MonthlyCalendarView({ onSelectDay, onClose }: MonthlyCal
 
   // Days in selected month
   const getDaysInMonth = (year: number, month: number) => {
-    return new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+    return new Date(year, month + 1, 0).getDate();
   };
 
   // First day of selected month (to pad the grid)
   const getFirstDayOfMonth = (year: number, month: number) => {
-    return new Date(Date.UTC(year, month, 1)).getUTCDay();
+    return new Date(year, month, 1).getDay();
   };
 
   const totalDays = getDaysInMonth(currentYear, currentMonth);
@@ -75,8 +112,8 @@ export default function MonthlyCalendarView({ onSelectDay, onClose }: MonthlyCal
     const monthStr = String(currentMonth + 1).padStart(2, '0');
     const dayStr = String(d).padStart(2, '0');
     const dateStr = `${currentYear}-${monthStr}-${dayStr}`;
-    const info = getTamilCalendarInfo(dateStr);
-    const tempDate = new Date(Date.UTC(currentYear, currentMonth, d));
+    const info = getTamilCalendarInfo(dateStr, calendarRecords);
+    const tempDate = new Date(currentYear, currentMonth, d);
     cells.push({ date: tempDate, info });
   }
 
@@ -163,7 +200,7 @@ export default function MonthlyCalendarView({ onSelectDay, onClose }: MonthlyCal
                 );
               }
 
-              const d = cell.date.getUTCDate();
+              const d = cell.date.getDate();
               const dots = getDotDetails(cell.info);
               const isSelected = selectedDayInfo?.englishDate === cell.info.englishDate;
               
@@ -186,22 +223,27 @@ export default function MonthlyCalendarView({ onSelectDay, onClose }: MonthlyCal
                 >
                   {/* Top Row: English Date & Astrological markers */}
                   <div className="flex justify-between items-center w-full">
-                    <span className={`text-sm font-extrabold font-mono ${cell.date.getUTCDay() === 0 ? 'text-red-600' : 'text-amber-950'}`}>
+                    <span className={`text-sm font-extrabold font-mono ${cell.date.getDay() === 0 ? 'text-red-600' : 'text-amber-950'}`}>
                       {d}
                     </span>
                     
-                    {/* Tiny Moon phase or Holiday dot */}
-                    {dots?.isPournami && <Sun className="w-2.5 h-2.5 text-amber-500 fill-amber-300 flex-shrink-0 animate-spin-slow" />}
-                    {dots?.isAmavasai && <Moon className="w-2.5 h-2.5 text-slate-800 fill-slate-800 flex-shrink-0" />}
-                    {!dots?.isPournami && !dots?.isAmavasai && dots?.isHoliday && <div className="w-1.5 h-1.5 bg-red-600 rounded-full" />}
                   </div>
 
                   {/* Bottom Row: Tamil Date */}
                   <div className="flex items-end justify-between w-full">
-                    {/* Visual dot indicators */}
-                    <div className="flex space-x-0.5">
-                      {dots?.isAuspicious && <div className="w-1 h-1 bg-emerald-500 rounded-full" title="Auspicious Day" />}
-                    </div>
+                    {/* Special Symbols Icons */}
+                    {cell.info.specialSymbols && getSpecialSymbolIcon(cell.info.specialSymbols).length > 0 && (
+                      <div className="flex space-x-0.5">
+                        {getSpecialSymbolIcon(cell.info.specialSymbols).map((iconPath, idx) => (
+                          <img 
+                            key={idx}
+                            src={iconPath} 
+                            alt=""
+                            className="w-3.5 h-3.5 object-contain"
+                          />
+                        ))}
+                      </div>
+                    )}
                     {/* Tamil day number */}
                     <span className="text-[10px] font-mono font-bold text-amber-700/80 leading-none">
                       {cell.info.tamilDay}
@@ -212,25 +254,6 @@ export default function MonthlyCalendarView({ onSelectDay, onClose }: MonthlyCal
             })}
           </div>
 
-          {/* Grid Indicators Key */}
-          <div className="flex flex-wrap items-center justify-around mt-4 pt-3 border-t border-[#8A1A1A]/10 text-[10px] font-bold text-amber-900 gap-y-1">
-            <div className="flex items-center space-x-1">
-              <Sun className="w-3.5 h-3.5 text-amber-500 fill-amber-300" />
-              <span>பௌர்ணமி (Full Moon)</span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <Moon className="w-3.5 h-3.5 text-slate-800 fill-slate-800" />
-              <span>அமாவாசை (New Moon)</span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <div className="w-2 h-2 bg-red-600 rounded-full" />
-              <span>விடுமுறை/பண்டிகை (Holiday)</span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <div className="w-2 h-2 bg-emerald-500 rounded-full" />
-              <span>சுப நாள் (Auspicious)</span>
-            </div>
-          </div>
         </div>
       </div>
 

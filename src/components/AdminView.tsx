@@ -23,9 +23,11 @@ import {
   saveImportedRecordsMap, 
   getCurrentISTDateString 
 } from '../utils/tamilCalendar';
+import { apiFetchJson } from '../utils/apiFetch';
 
 interface AdminViewProps {
   onClose: () => void;
+  apiBase?: string;
 }
 
 // Custom parser to support CSV parsing with commas inside quotes
@@ -109,7 +111,7 @@ function normalizeDate(rawDateStr: string): string {
   return cleaned;
 }
 
-export default function AdminView({ onClose }: AdminViewProps) {
+export default function AdminView({ onClose, apiBase = '' }: AdminViewProps) {
   const [password, setPassword] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loginError, setLoginError] = useState('');
@@ -123,10 +125,12 @@ export default function AdminView({ onClose }: AdminViewProps) {
   const [records, setRecords] = useState<Record<string, any>>(getImportedRecordsMap());
   const [searchTerm, setSearchTerm] = useState('');
 
+  const API_BASE = apiBase || '/api';
+
   // Sync on initialization with MySQL server-side API
   useEffect(() => {
-    fetch('/api/calendar')
-      .then(res => res.json())
+    // De-duplicated with the App.tsx mount sync (same URL) — one request.
+    apiFetchJson(`${API_BASE}/calendar`, { decodeTamilEscapes: true })
       .then(result => {
         if (result.success && result.data) {
           setRecords(result.data);
@@ -146,6 +150,7 @@ export default function AdminView({ onClose }: AdminViewProps) {
   const REQUIRED_HEADERS = [
     'English Date and (m/d/y)', 'English Day', 'date (eng)', 'கிழமை (ஆ )', 'மாதம் (ஆ )',
     'தமிழ் தேதி', 'தமிழ் மாதம்', 'தமிழ் ஆண்டின் பெயர்', 'what\' special today', 'Special symbols',
+    'Moon details', 'Symbols',
     'நட்சத்திரம்', 'திதி', 'யோகம்', 'சந்திராஷ்டமம்', 'காலை', 'மாலை', 'காலை', 'மாலை',
     'ராகுகாலம்', 'எமகண்டம்', 'குளிகை', 'சூலம்', 'மேஷம்', 'ரிஷபம்', 'மிதுனம்', 'கடகம்',
     'சிம்மம்', 'கன்னி', 'துலாம்', 'விருச்சிகம்', 'தனுசு', 'மகரம்', 'கும்பம்', 'மீனம்'
@@ -171,7 +176,7 @@ export default function AdminView({ onClose }: AdminViewProps) {
     }
   };
 
-  const processCSVText = (csvText: string) => {
+  const processCSVText = async (csvText: string) => {
     try {
       const lines = parseCSV(csvText);
       if (lines.length < 2) {
@@ -209,30 +214,32 @@ export default function AdminView({ onClose }: AdminViewProps) {
           tamilYear: row[7] || '',
           specialToday: row[8] || '',
           specialSymbols: row[9] || '',
-          nakshatram: row[10] || '',
-          thithi: row[11] || '',
-          yogam: row[12] || '',
-          chandrashtamam: row[13] || '',
-          nallaNeramMorning: row[14] || '',
-          nallaNeramEvening: row[15] || '',
-          gowriMorning: row[16] || '',
-          gowriEvening: row[17] || '',
-          raghuKalam: row[18] || '',
-          yamagandam: row[19] || '',
-          kuligai: row[20] || '',
-          soolam: row[21] || '',
-          மேஷம்: row[22] || '',
-          ரிஷபம்: row[23] || '',
-          மிதுனம்: row[24] || '',
-          கடகம்: row[25] || '',
-          சிம்மம்: row[26] || '',
-          கன்னி: row[27] || '',
-          துலாம்: row[28] || '',
-          விருச்சிகம்: row[29] || '',
-          தனுசு: row[30] || '',
-          மகரம்: row[31] || '',
-          கும்பம்: row[32] || '',
-          மீனம்: row[33] || '',
+          moonDetails: row[10] || '',
+          symbols: row[11] || '',
+          nakshatram: row[12] || '',
+          thithi: row[13] || '',
+          yogam: row[14] || '',
+          chandrashtamam: row[15] || '',
+          nallaNeramMorning: row[16] || '',
+          nallaNeramEvening: row[17] || '',
+          gowriMorning: row[18] || '',
+          gowriEvening: row[19] || '',
+          raghuKalam: row[20] || '',
+          yamagandam: row[21] || '',
+          kuligai: row[22] || '',
+          soolam: row[23] || '',
+          மேஷம்: row[24] || '',
+          ரிஷபம்: row[25] || '',
+          மிதுனம்: row[26] || '',
+          கடகம்: row[27] || '',
+          சிம்மம்: row[28] || '',
+          கன்னி: row[29] || '',
+          துலாம்: row[30] || '',
+          விருச்சிகம்: row[31] || '',
+          தனுசு: row[32] || '',
+          மகரம்: row[33] || '',
+          கும்பம்: row[34] || '',
+          மீனம்: row[35] || '',
         };
 
         parsedRecordsMap[dateKey] = record;
@@ -242,17 +249,32 @@ export default function AdminView({ onClose }: AdminViewProps) {
       saveImportedRecordsMap(parsedRecordsMap);
       setRecords(parsedRecordsMap);
 
-      // Save to server-side MySQL database via API
-      fetch('/api/calendar', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ records: parsedRecordsMap })
-      })
-      .catch(err => console.error('Error saving records to server API:', err));
+      // Also send to server API
+      try {
+        const csvText = lines.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+        const headersLine = REQUIRED_HEADERS.map(h => `"${h}"`).join(',');
+        const fullCsv = headersLine + '\n' + csvText;
+        
+        const blob = new Blob([fullCsv], { type: 'text/csv;charset=utf-8;' });
+        const formData = new FormData();
+        formData.append('csv', blob, 'calendar.csv');
 
-      setImportStatus({ 
-        success: true, 
-        message: `${importCount} நாட்கள் வெற்றிகரமாக MySQL அட்டவணையில் பதிவேற்றப்பட்டு புதுப்பிக்கப்பட்டது! (${importCount} rows successfully updated in MySQL table!)` 
+        const token = localStorage.getItem('admin_token');
+        const headers: Record<string, string> = {};
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+
+        await fetch(`${API_BASE}/admin/import-csv`, {
+          method: 'POST',
+          headers,
+          body: formData,
+        });
+      } catch (err) {
+        console.error('Failed to sync with server:', err);
+      }
+
+      setImportStatus({
+        success: true,
+        message: `${importCount} நாட்கள் வெற்றிகரமாக MySQL அட்டவணையில் பதிவேற்றப்பட்டு புதுப்பிக்கப்பட்டது! (${importCount} rows successfully updated in MySQL table!)`
       });
     } catch (err: any) {
       setImportStatus({ success: false, message: `பிழை ஏற்பட்டது: ${err.message}` });
@@ -293,10 +315,11 @@ export default function AdminView({ onClose }: AdminViewProps) {
     // Generate a CSV download with correct headers
     const row1 = [
       '2026-07-14', 'Tuesday', '14', 'செவ்வாய்', 'ஜூலை', '30', 'ஆனி', 'பராபவ',
-      'அமாவாசை விரதம், மங்களகரமான நாள்', '🕉', 'புனர்பூசம்', 'அமாவாசை', 'சித்த யோகம்', 'கேட்டை',
+      'அமாவாசை விரதம், மங்களகரமான நாள்', '🕉', 'Waxing / வளர்பிறை', '🪔',
+      'புனர்பூசம்', 'அமாவாசை', 'சித்த யோகம்', 'கேட்டை',
       'காலை 07:30 - 09:00', 'மாலை 04:30 - 06:00', 'காலை 10:30 - 12:00', 'மாலை 01:30 - 03:00',
       'மாலை 03:00 - 04:30', 'காலை 09:00 - 10:30', 'பகல் 12:00 - 01:30', 'வடக்கு (வெல்லம்)',
-      'இன்று தொட்ட காரியங்கள் துலங்கும்.', 'பணிச்சுமை குறையும்.', 'দীর্ঘநாள் கனவு நனவாகும்.', 'வார்த்தைகளில் நிதானம் தேவை.',
+      'இன்று தொட்ட காரியங்கள் துலங்கும்.', 'பணிச்சுமை குறையும்.', 'दीर्घநாள் கனவு நனவாகும்.', 'வார்த்தைகளில் நிதானம் தேவை.',
       'தொழிலில் அபரிமிதமான வளர்ச்சி.', 'கல்வியில் சாதனை படைப்பீர்கள்.', 'புதிய முயற்சிகள் வெற்றி தரும்.', 'முக்கிய முடிவுகளை தள்ளிப்போடவும்.',
       'தன்னம்பிக்கை அதிகரிக்கும்.', 'பொருளாதார வளம் சிறக்கும்.', 'தடைகள் அனைத்தும் விலகும்.', 'ஆரோக்கியத்தில் கவனம் தேவை.'
     ];
@@ -319,26 +342,12 @@ export default function AdminView({ onClose }: AdminViewProps) {
     delete updated[dateKey];
     saveImportedRecordsMap(updated);
     setRecords(updated);
-
-    // Delete on server-side via API
-    fetch(`/api/calendar/${dateKey}`, {
-      method: 'DELETE'
-    })
-    .catch(err => console.error('Error deleting record from server API:', err));
   };
 
   const handleClearAll = () => {
     if (window.confirm('அனைத்து தரவுகளையும் அழிக்க வேண்டுமா? (Are you sure you want to delete all overridden records?)')) {
       saveImportedRecordsMap({});
       setRecords({});
-
-      // Clear on server-side via API
-      fetch('/api/calendar', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ records: {} })
-      })
-      .catch(err => console.error('Error clearing records on server API:', err));
     }
   };
 
@@ -709,7 +718,7 @@ export default function AdminView({ onClose }: AdminViewProps) {
                     அட்டவணைப் புதுப்பித்தல் சரியாக இயங்க உங்கள் CSV கோப்பின் முதல் வரியில் கீழ்க்கண்ட நெடுவரிசைகள் வரிசை மாறாமல் இருக்க வேண்டும்:
                   </p>
                   <div className="bg-amber-50 p-2.5 rounded-xl border border-amber-100 font-mono text-[9px] text-amber-950 overflow-x-auto whitespace-nowrap scrollbar-thin">
-                    English Date and (m/d/y), English Day, date (eng), கிழமை (ஆ ), மாதம் (ஆ ), தமிழ் தேதி, தமிழ் மாதம், தமிழ் ஆண்டின் பெயர், what' special today, Special symbols, நட்சத்திரம், திதி, யோகம், சந்திராஷ்டமம், காலை, மாலை, காலை, மாலை, ராகுகாலம், எமகண்டம், குளிகை, சூலம், மேஷம், ரிஷபம், மிதுனம், கடகம், சிம்மம், கன்னி, துலாம், விருச்சிகம், தனுசு, மகரம், கும்பம், மீனம்
+                    English Date and (m/d/y), English Day, date (eng), கிழமை (ஆ ), மாதம் (ஆ ), தமிழ் தேதி, தமிழ் மாதம், தமிழ் ஆண்டின் பெயர், what' special today, Special symbols, Moon details, Symbols, நட்சத்திரம், திதி, யோகம், சந்திராஷ்டமம், காலை, மாலை, காலை, மாலை, ராகுகாலம், எமகண்டம், குளிகை, சூலம், மேஷம், ரிஷபம், மிதுனம், கடகம், சிம்மம், கன்னி, துலாம், விருச்சிகம், தனுசு, மகரம், கும்பம், மீனம்
                   </div>
                 </div>
               </div>

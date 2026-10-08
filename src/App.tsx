@@ -35,7 +35,8 @@ import { motion, AnimatePresence } from 'motion/react';
 
 import AdminView from './components/AdminView';
 
- import { AppView, buildPath, parsePathRoute, navigateToRoute } from './router';
+import { AppView, buildPath, parsePathRoute, navigateToRoute } from './router';
+import { apiFetchJson } from './utils/apiFetch';
 
 export default function App() {
   const initialRoute = parsePathRoute();
@@ -100,14 +101,13 @@ export default function App() {
     try {
       const map = { ...calendarRecords };
       if (map[dateStr]) return;
-  const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
-      const cacheBuster = Date.now();
-      const res = await fetch(`${apiBase}/calendar?date=${encodeURIComponent(dateStr)}&_t=${cacheBuster}`, {
-        headers: { 'Accept': 'application/json' },
-        cache: 'no-store',
-      });
-      const text = await res.text();
-      const result = JSON.parse(text.replace(/\\u([0-9a-fA-F]{4})/g, (_, code) => String.fromCharCode(parseInt(code, 16))));
+      const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
+      // apiFetchJson de-duplicates this with the DailyCalendarView fetch for
+      // the same date, so the API is hit only once.
+      const result = await apiFetchJson(
+        `${apiBase}/calendar?date=${encodeURIComponent(dateStr)}`,
+        { decodeTamilEscapes: true }
+      );
       if (result.success && result.data && result.data[dateStr]) {
         map[dateStr] = result.data[dateStr];
         saveImportedRecordsMap(map);
@@ -127,18 +127,10 @@ export default function App() {
 
   // Fetch latest database overrides from server MySQL API on mount
   React.useEffect(() => {
-      const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
-    const apiUrl = `${apiBase}/calendar`;
-    const cacheBuster = Date.now();
-
-    fetch(`${apiUrl}?_t=${cacheBuster}`, {
-      headers: { 'Accept': 'application/json' },
-      cache: 'no-store',
-    })
-      .then(async (res) => {
-        const text = await res.text();
-        return JSON.parse(text.replace(/\\u([0-9a-fA-F]{4})/g, (_, code) => String.fromCharCode(parseInt(code, 16))));
-      })
+    const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
+    // De-duplicated with the MonthlyCalendarView / AdminView sync fetches
+    // (same URL) so this runs only once per TTL window.
+    apiFetchJson(`${apiBase}/calendar`, { decodeTamilEscapes: true })
       .then(result => {
         if (result.success && result.data) {
           setCalendarRecords(result.data);
