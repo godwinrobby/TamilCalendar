@@ -11,7 +11,6 @@ import {
   Coins, 
   Compass, 
   Sparkles, 
-  Award, 
   Flame,
   Bell, 
   Volume2, 
@@ -357,15 +356,15 @@ export default function App() {
                     <span className="text-[9px] opacity-75 mt-0.5 block">Festivals & Holidays</span>
                   </button>
 
-                  {/* Option 4: Fasting schedule */}
+                  {/* Option 4: Articles */}
                   <button
-                    onClick={() => navigateToRoute('fasting')}
+                    onClick={() => navigateToRoute('articles')}
                     className="bg-[#8A1A1A] text-[#FDF6E2] p-4 rounded-2xl shadow-sm border border-amber-400/20 flex flex-col items-center justify-center text-center transition hover:scale-[1.01] active:scale-95 cursor-pointer h-28 relative overflow-hidden group"
-                    id="btn_to_fasting"
+                    id="btn_to_articles"
                   >
-                    <Award className="w-6 h-6 text-amber-300 mb-1 group-hover:scale-110 transition-transform" />
-                    <span className="text-xs font-black tracking-tight leading-tight">விரத நாட்கள்</span>
-                    <span className="text-[9px] opacity-75 mt-0.5 block">Fasting Days</span>
+                    <BookOpen className="w-6 h-6 text-amber-300 mb-1 group-hover:scale-110 transition-transform" />
+                    <span className="text-xs font-black tracking-tight leading-tight">கட்டுரைகள்</span>
+                    <span className="text-[9px] opacity-75 mt-0.5 block">Articles & Stories</span>
                   </button>
 
                 </div>
