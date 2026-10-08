@@ -19,84 +19,129 @@ import {
   Check, 
   HelpCircle,
   Clock,
-  ChevronLeft
+  ChevronLeft,
+  BookOpen
 } from 'lucide-react';
-import { getTamilCalendarInfo, getCurrentISTDateString } from './utils/tamilCalendar';
+import { getTamilCalendarInfo, getCurrentISTDateString, getImportedRecordsMap, saveImportedRecordsMap } from './utils/tamilCalendar';
 import DailyCalendarView from './components/DailyCalendarView';
 import MonthlyCalendarView from './components/MonthlyCalendarView';
 import AstrologyView from './components/AstrologyView';
 import FestivalsView from './components/FestivalsView';
 import FastingDaysView from './components/FastingDaysView';
 import AboutUsView from './components/AboutUsView';
+import ArticlesView from './components/ArticlesView';
+import ArticleDetailView from './components/ArticleDetailView';
 import { motion, AnimatePresence } from 'motion/react';
 
-const AdminView = React.lazy(() => import('./components/AdminView'));
+import AdminView from './components/AdminView';
 
-type AppView = 'dashboard' | 'daily' | 'monthly' | 'astrology' | 'festivals' | 'fasting' | 'admin' | 'about';
-
-const parseHashRoute = () => {
-  if (typeof window !== 'undefined') {
-    const pathname = window.location.pathname.replace(/\/$/, ''); // strip trailing slash
-    if (pathname === '/admin' || pathname.endsWith('/admin')) {
-      window.history.replaceState(null, '', '/#/admin');
-    }
-  }
-  const hash = typeof window !== 'undefined' ? window.location.hash || '#/dashboard' : '#/dashboard';
-  const [pathPart, queryPart] = hash.split('?');
-  const view = pathPart.replace('#/', '') || 'dashboard';
-  
-  const validViews: AppView[] = ['dashboard', 'daily', 'monthly', 'astrology', 'festivals', 'fasting', 'admin', 'about'];
-  const activeView = validViews.includes(view as AppView) ? (view as AppView) : 'dashboard';
-  
-  let date = getCurrentISTDateString();
-  if (queryPart) {
-    const params = new URLSearchParams(queryPart);
-    const dateParam = params.get('date');
-    if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
-      date = dateParam;
-    }
-  }
-  return { activeView, selectedDateStr: date };
-};
+ import { AppView, buildPath, parsePathRoute, navigateToRoute } from './router';
 
 export default function App() {
-  const initialRoute = parseHashRoute();
+  const initialRoute = parsePathRoute();
   const [activeView, setActiveView] = useState<AppView>(initialRoute.activeView);
   const [selectedDateStr, setSelectedDateStr] = useState<string>(initialRoute.selectedDateStr);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [isQuoteOpen, setIsQuoteOpen] = useState(false);
+  const [articleSlug, setArticleSlug] = useState<string | null>(() => {
+    if (initialRoute.activeView === 'article') {
+      const match = window.location.pathname.match(/^\/article\/(.+)$/);
+      return match ? match[1] : null;
+    }
+    return null;
+  });
   const [dbSynced, setDbSynced] = useState(false);
+  const [calendarRecords, setCalendarRecords] = useState<Record<string, any>>(() => getImportedRecordsMap());
 
-  // Sync state with hash change
+  // Sync state with pathname change
   React.useEffect(() => {
-    const handleHashChange = () => {
-      const { activeView: newView, selectedDateStr: newDate } = parseHashRoute();
-      setActiveView(newView);
-      setSelectedDateStr(newDate);
+    const handleRouteChange = () => {
+      const route = parsePathRoute();
+      setActiveView(route.activeView);
+      setSelectedDateStr(route.selectedDateStr);
+      // Extract article slug from pathname if on article detail page
+      if (route.activeView === 'article') {
+        const match = window.location.pathname.match(/^\/article\/(.+)$/);
+        setArticleSlug(match ? match[1] : null);
+      }
+      // Update document title based on active view
+      const titles: Record<string, string> = {
+        dashboard: 'Vel Tamil Calendar',
+        daily: 'நாள்காட்டி (Daily Sheet) - Vel Tamil Calendar',
+        monthly: 'மாதகாட்டி (Monthly Calendar) - Vel Tamil Calendar',
+        astrology: 'ஜோதிடம் (Astrology) - Vel Tamil Calendar',
+        festivals: 'விடுமுறைகள் (Festivals) - Vel Tamil Calendar',
+        fasting: 'விரத நாட்கள் (Fasting) - Vel Tamil Calendar',
+        about: 'எங்களைப் பற்றி (About Us) - Vel Tamil Calendar',
+        articles: 'கட்டுரைகள் (Articles) - Vel Tamil Calendar',
+        article: 'கட்டுரை (Article) - Vel Tamil Calendar',
+      };
+      document.title = titles[route.activeView] || 'Vel Tamil Calendar';
     };
-    
-    window.addEventListener('hashchange', handleHashChange);
-    
-    // Set initial hash if none exists to make URL look beautiful
-    if (!window.location.hash) {
-      window.location.hash = '#/dashboard';
+
+    window.addEventListener('popstate', handleRouteChange);
+
+    // Always call handleRouteChange on initial mount to set articleSlug and document title
+    handleRouteChange();
+
+    if (typeof window !== 'undefined' && (window.location.pathname === '/' || window.location.pathname === '')) {
+      history.replaceState(null, '', buildPath('dashboard'));
     }
 
     return () => {
-      window.removeEventListener('hashchange', handleHashChange);
+      window.removeEventListener('popstate', handleRouteChange);
     };
   }, []);
 
+  // If a specific date view is active, ensure its override is present via /api/calendar?date=...
+  const ensureDateInCache = React.useCallback(async (dateStr: string) => {
+    try {
+      const map = { ...calendarRecords };
+      if (map[dateStr]) return;
+  const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
+      const cacheBuster = Date.now();
+      const res = await fetch(`${apiBase}/calendar?date=${encodeURIComponent(dateStr)}&_t=${cacheBuster}`, {
+        headers: { 'Accept': 'application/json' },
+        cache: 'no-store',
+      });
+      const text = await res.text();
+      const result = JSON.parse(text.replace(/\\u([0-9a-fA-F]{4})/g, (_, code) => String.fromCharCode(parseInt(code, 16))));
+      if (result.success && result.data && result.data[dateStr]) {
+        map[dateStr] = result.data[dateStr];
+        saveImportedRecordsMap(map);
+        setCalendarRecords(map);
+      }
+    } catch (e) {
+      console.error('Error fetching date-specific calendar data:', e);
+    }
+  }, [calendarRecords]);
+
+  // Ensure the active daily date has DB data via /api/calendar?date=...
+  React.useEffect(() => {
+    if (activeView === 'daily' && selectedDateStr) {
+      ensureDateInCache(selectedDateStr);
+    }
+  }, [activeView, selectedDateStr, ensureDateInCache]);
+
   // Fetch latest database overrides from server MySQL API on mount
   React.useEffect(() => {
-    fetch('/api/calendar')
-      .then(res => res.json())
+      const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
+    const apiUrl = `${apiBase}/calendar`;
+    const cacheBuster = Date.now();
+
+    fetch(`${apiUrl}?_t=${cacheBuster}`, {
+      headers: { 'Accept': 'application/json' },
+      cache: 'no-store',
+    })
+      .then(async (res) => {
+        const text = await res.text();
+        return JSON.parse(text.replace(/\\u([0-9a-fA-F]{4})/g, (_, code) => String.fromCharCode(parseInt(code, 16))));
+      })
       .then(result => {
         if (result.success && result.data) {
-          // Sync with local storage cache so all synchronous helpers can read it
-          localStorage.setItem('mysql_table_tamil_calendar', JSON.stringify(result.data));
+          setCalendarRecords(result.data);
           setDbSynced(true);
         }
       })
@@ -105,19 +150,10 @@ export default function App() {
       });
   }, []);
 
-  // Router-based navigation helper
-  const navigateTo = (view: AppView, dateStr?: string) => {
-    const dateToUse = dateStr || selectedDateStr;
-    let newHash = `#/${view}`;
-    if (view === 'daily' && dateToUse) {
-      newHash += `?date=${dateToUse}`;
-    }
-    window.location.hash = newHash;
-  };
-
   // Sync date when sub-components update it
-  const handleSelectDay = (dateStr: string) => {
-    navigateTo('daily', dateStr);
+  const handleSelectDay = async (dateStr: string) => {
+    await ensureDateInCache(dateStr);
+    navigateToRoute('daily', dateStr);
   };
 
   // Get date information for the dashboard header
@@ -154,16 +190,10 @@ export default function App() {
   const randomQuote = spiritualQuotes[dateNum % spiritualQuotes.length];
 
   if (activeView === 'admin') {
+    const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
     return (
       <div className="min-h-screen w-full bg-[#FFFDF0] text-[#5C1A1A] font-sans" id="app_root_admin">
-        <React.Suspense fallback={
-          <div className="min-h-screen flex flex-col items-center justify-center bg-[#FFFDF0] text-[#8A1A1A]">
-            <div className="w-10 h-10 border-4 border-amber-600 border-t-transparent rounded-full animate-spin mb-3"></div>
-            <span className="text-xs font-bold font-mono">நிர்வாகி பகுதி ஏற்றப்படுகிறது... (Loading Admin Module...)</span>
-          </div>
-        }>
-          <AdminView onClose={() => navigateTo('dashboard')} />
-        </React.Suspense>
+        <AdminView onClose={() => navigateToRoute('dashboard')} apiBase={apiBase} />
       </div>
     );
   }
@@ -180,7 +210,7 @@ export default function App() {
           {activeView === 'dashboard' ? (
             <>
               {/* Logo & Branding */}
-              <div className="flex items-center space-x-2.5 cursor-pointer" onClick={() => navigateTo('dashboard')} id="header_date_box">
+              <div className="flex items-center space-x-2.5 cursor-pointer" onClick={() => navigateToRoute('dashboard')} id="header_date_box">
                 <span className="text-2xl leading-none animate-pulse">🕉</span>
                 <div className="leading-tight flex flex-col">
                   <span className="text-amber-300 font-extrabold text-sm tracking-wide">தமிழ் நாள்காட்டி</span>
@@ -231,10 +261,10 @@ export default function App() {
             <>
               {/* Back Button & Title */}
               <div className="flex items-center space-x-2.5" id="sub_header_left">
-                <button 
-                  onClick={() => navigateTo('dashboard')} 
+                <button
+                  onClick={() => navigateToRoute(activeView === 'article' ? 'articles' : 'dashboard')}
                   className="flex items-center justify-center w-8 h-8 bg-[#FFFDF0] text-[#8A1A1A] rounded-full hover:bg-amber-50 transition shadow-md border border-amber-200/50 active:scale-95 flex-shrink-0 cursor-pointer"
-                  title="முகப்பு (Home)"
+                  title={activeView === 'article' ? 'கட்டுரைகள் (Articles)' : 'முகப்பு (Home)'}
                   id="header_back_btn"
                 >
                   <ChevronLeft className="w-4 h-4 flex-shrink-0 stroke-[2.5]" />
@@ -243,26 +273,32 @@ export default function App() {
                   {activeView === 'daily' && <Calendar className="w-4 h-4 text-amber-300" />}
                   {activeView === 'monthly' && <Calendar className="w-4 h-4 text-amber-300 animate-pulse" />}
                   {activeView === 'astrology' && <Compass className="w-4 h-4 text-amber-300 animate-spin-slow" />}
-                  {activeView === 'festivals' && <Flame className="w-4 h-4 text-amber-300 animate-bounce" />}
-                  {activeView === 'fasting' && <Bell className="w-4 h-4 text-amber-300 animate-pulse" />}
-                  <span className="text-xs sm:text-sm md:text-base font-extrabold tracking-wide text-white whitespace-nowrap">
-                    {activeView === 'daily' && 'நாள்காட்டி (Daily Sheet)'}
-                    {activeView === 'monthly' && 'மாதகாட்டி (Monthly Calendar)'}
-                    {activeView === 'astrology' && 'ஜோதிடம் (Astrology)'}
-                    {activeView === 'festivals' && 'விடுமுறைகள் (Festivals)'}
-                    {activeView === 'fasting' && 'விரத நாட்கள் (Fasting)'}
-                  </span>
+                   {activeView === 'festivals' && <Flame className="w-4 h-4 text-amber-300 animate-bounce" />}
+                   {activeView === 'fasting' && <Bell className="w-4 h-4 text-amber-300 animate-pulse" />}
+                   {activeView === 'articles' && <BookOpen className="w-4 h-4 text-amber-300" />}
+                   {activeView === 'article' && <BookOpen className="w-4 h-4 text-amber-300" />}
+                   <span className="text-xs sm:text-sm md:text-base font-extrabold tracking-wide text-white whitespace-nowrap">
+                     {activeView === 'daily' && 'நாள்காட்டி (Daily Sheet)'}
+                     {activeView === 'monthly' && 'மாதகாட்டி (Monthly Calendar)'}
+                     {activeView === 'astrology' && 'ஜோதிடம் (Astrology)'}
+                     {activeView === 'festivals' && 'விடுமுறைகள் (Festivals)'}
+                     {activeView === 'fasting' && 'விரத நாட்கள் (Fasting)'}
+                     {activeView === 'articles' && 'கட்டுரைகள் (Articles)'}
+                     {activeView === 'article' && 'கட்டுரை (Article)'}
+                   </span>
                 </div>
               </div>
 
               {/* Right Badge */}
               <div className="w-8 h-8 flex items-center justify-center rounded-full border-2 border-amber-400 bg-[#701515] text-amber-300 shadow-inner flex-shrink-0 font-mono text-[11px] font-black" id="header_right_badge">
-                {activeView === 'daily' && new Date(selectedDateStr).getDate()}
-                {activeView === 'monthly' && (new Date(selectedDateStr).getMonth() + 1).toString().padStart(2, '0')}
-                {activeView === 'astrology' && '🪐'}
-                {activeView === 'festivals' && '🎉'}
-                {activeView === 'fasting' && '🔔'}
-              </div>
+                 {activeView === 'daily' && new Date(selectedDateStr).getDate()}
+                 {activeView === 'monthly' && (new Date(selectedDateStr).getMonth() + 1).toString().padStart(2, '0')}
+                 {activeView === 'astrology' && '🪐'}
+                 {activeView === 'festivals' && '🎉'}
+                 {activeView === 'fasting' && '🔔'}
+                 {activeView === 'articles' && '📚'}
+                 {activeView === 'article' && '📖'}
+               </div>
             </>
           )}
         </header>
@@ -294,7 +330,7 @@ export default function App() {
                   
                   {/* Option 1: Daily Sheet Calendar */}
                   <button
-                    onClick={() => navigateTo('daily')}
+                    onClick={() => navigateToRoute('daily')}
                     className="bg-[#8A1A1A] text-[#FDF6E2] p-4 rounded-2xl shadow-sm border border-amber-400/20 flex flex-col items-center justify-center text-center transition hover:scale-[1.01] active:scale-95 cursor-pointer h-28 relative overflow-hidden group"
                     id="btn_to_daily_sheet"
                   >
@@ -305,7 +341,7 @@ export default function App() {
 
                   {/* Option 2: Monthly Grid Calendar */}
                   <button
-                    onClick={() => navigateTo('monthly')}
+                    onClick={() => navigateToRoute('monthly')}
                     className="bg-[#8A1A1A] text-[#FDF6E2] p-4 rounded-2xl shadow-sm border border-amber-400/20 flex flex-col items-center justify-center text-center transition hover:scale-[1.01] active:scale-95 cursor-pointer h-28 relative overflow-hidden group"
                     id="btn_to_monthly_grid"
                   >
@@ -320,7 +356,7 @@ export default function App() {
 
                   {/* Option 3: Festivals list */}
                   <button
-                    onClick={() => navigateTo('festivals')}
+                    onClick={() => navigateToRoute('festivals')}
                     className="bg-[#8A1A1A] text-[#FDF6E2] p-4 rounded-2xl shadow-sm border border-amber-400/20 flex flex-col items-center justify-center text-center transition hover:scale-[1.01] active:scale-95 cursor-pointer h-28 relative overflow-hidden group"
                     id="btn_to_festivals"
                   >
@@ -331,7 +367,7 @@ export default function App() {
 
                   {/* Option 4: Fasting schedule */}
                   <button
-                    onClick={() => navigateTo('fasting')}
+                    onClick={() => navigateToRoute('fasting')}
                     className="bg-[#8A1A1A] text-[#FDF6E2] p-4 rounded-2xl shadow-sm border border-amber-400/20 flex flex-col items-center justify-center text-center transition hover:scale-[1.01] active:scale-95 cursor-pointer h-28 relative overflow-hidden group"
                     id="btn_to_fasting"
                   >
@@ -344,46 +380,6 @@ export default function App() {
 
 
 
-                {/* Horizontal Astrology Row */}
-                <div id="astrology_row">
-                  <button
-                    onClick={() => navigateTo('astrology')}
-                    className="w-full bg-white border-2 border-[#8A1A1A] rounded-2xl p-3 flex items-center justify-center space-x-3 shadow-sm hover:bg-amber-50/40 active:scale-95 transition cursor-pointer"
-                    id="btn_to_astrology"
-                  >
-                    <div className="w-6 h-6 bg-[#8A1A1A]/10 rounded-full flex items-center justify-center border border-amber-300">
-                      <Compass className="w-3.5 h-3.5 text-[#8A1A1A] animate-spin-slow" />
-                    </div>
-                    <div className="text-left leading-tight">
-                      <span className="text-xs font-black text-[#8A1A1A] block">ஜோதிடம் மற்றும் ஜாதகம்</span>
-                      <span className="text-[9px] font-bold text-amber-800 block">Daily Horoscopes & Astro Guide</span>
-                    </div>
-                  </button>
-                </div>
-
-                {/* Promo consultation banner */}
-                <div id="consultation_banner_row">
-                  <button
-                    onClick={() => {
-                      navigateTo('astrology', '2026-07-13');
-                      triggerToast('ஜாதகம் கணிக்கும் பக்கத்திற்கு செல்கிறது...');
-                    }}
-                    className="w-full bg-[#8A1A1A] text-[#FDF6E2] border-2 border-amber-400 rounded-2xl shadow-md p-3.5 flex items-center justify-between hover:bg-[#9C2020] hover:scale-[1.01] active:scale-95 transition relative overflow-hidden group cursor-pointer"
-                    id="btn_jathagam_consultation"
-                  >
-                    <div className="flex items-center space-x-3 z-10">
-                      <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center border border-amber-300/30">
-                        <Flame className="w-4 h-4 text-amber-300 fill-amber-200 animate-pulse" />
-                      </div>
-                      <div className="text-left leading-tight">
-                        <h4 className="text-[11px] font-black text-amber-200">ஓம் ஆஸ்ட்ரோ (Om Astro)</h4>
-                        <p className="text-[9px] text-amber-100/90 font-medium mt-0.5">கணினி ஜாதகம் கணித்தல் - வெறும் ₹30 முதல்</p>
-                      </div>
-                    </div>
-                    <span className="bg-amber-400 text-[#8A1A1A] font-black text-[9px] rounded-lg px-2.5 py-1 shadow border border-amber-200 flex-shrink-0">கணிக்க</span>
-                  </button>
-                </div>
-
                 {/* Spiritual Quote Block */}
                 <div className="bg-[#FCF8E3]/60 border border-dashed border-amber-400/80 rounded-2xl p-4 text-center shadow-inner relative flex flex-col justify-center min-h-[90px]" id="desktop_quote_panel">
                   <span className="text-[9px] uppercase font-black tracking-widest text-amber-800 block mb-1">இன்றைய பொன்மொழி</span>
@@ -395,7 +391,7 @@ export default function App() {
                 {/* Option 5: About Us Section Button */}
                 <div id="about_us_row">
                   <button
-                    onClick={() => navigateTo('about')}
+                    onClick={() => navigateToRoute('about')}
                     className="w-full bg-[#FCF8E3] border border-amber-300 rounded-2xl p-3 flex items-center justify-between shadow-sm hover:bg-amber-100/50 active:scale-[0.98] transition cursor-pointer"
                     id="btn_to_about_us"
                   >
@@ -426,50 +422,55 @@ export default function App() {
             {/* Active Sub-views (Render inside the frame) */}
             {activeView === 'daily' && (
               <motion.div key="daily_view" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="h-full flex flex-col overflow-hidden">
-                <DailyCalendarView initialDate={selectedDateStr} onClose={() => navigateTo('dashboard')} />
+                <DailyCalendarView initialDate={selectedDateStr} onClose={() => navigateToRoute('dashboard')} />
               </motion.div>
             )}
 
             {activeView === 'monthly' && (
               <motion.div key="monthly_view" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="h-full flex flex-col overflow-hidden">
-                <MonthlyCalendarView onSelectDay={handleSelectDay} onClose={() => navigateTo('dashboard')} />
+                <MonthlyCalendarView onSelectDay={handleSelectDay} onClose={() => navigateToRoute('dashboard')} />
               </motion.div>
             )}
 
             {activeView === 'astrology' && (
               <motion.div key="astrology_view" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="h-full flex flex-col overflow-hidden">
-                <AstrologyView selectedDateStr={selectedDateStr} onClose={() => navigateTo('dashboard')} />
+                <AstrologyView selectedDateStr={selectedDateStr} onClose={() => navigateToRoute('dashboard')} />
               </motion.div>
             )}
 
             {activeView === 'festivals' && (
               <motion.div key="festivals_view" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="h-full flex flex-col overflow-hidden">
-                <FestivalsView onSelectDay={handleSelectDay} onClose={() => navigateTo('dashboard')} />
+                <FestivalsView onSelectDay={handleSelectDay} onClose={() => navigateToRoute('dashboard')} />
               </motion.div>
             )}
 
             {activeView === 'fasting' && (
               <motion.div key="fasting_view" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="h-full flex flex-col overflow-hidden">
-                <FastingDaysView onSelectDay={handleSelectDay} onClose={() => navigateTo('dashboard')} />
+                <FastingDaysView onSelectDay={handleSelectDay} onClose={() => navigateToRoute('dashboard')} />
               </motion.div>
             )}
 
             {activeView === 'about' && (
               <motion.div key="about_view" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="h-full flex flex-col overflow-hidden">
-                <AboutUsView onClose={() => navigateTo('dashboard')} />
+                <AboutUsView onClose={() => navigateToRoute('dashboard')} />
               </motion.div>
             )}
 
-            {activeView === 'admin' && (
+            {(activeView as any) === 'admin' && (
               <motion.div key="admin_view" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="h-full flex flex-col overflow-hidden">
-                <React.Suspense fallback={
-                  <div className="h-full flex flex-col items-center justify-center bg-[#FFFDF0] text-[#8A1A1A]">
-                    <div className="w-8 h-8 border-4 border-amber-600 border-t-transparent rounded-full animate-spin mb-2"></div>
-                    <span className="text-xs font-bold font-mono">Loading Admin Module...</span>
-                  </div>
-                }>
-                  <AdminView onClose={() => navigateTo('dashboard')} />
-                </React.Suspense>
+                <AdminView onClose={() => navigateToRoute('dashboard')} apiBase={(import.meta as any)?.env?.VITE_API_BASE_URL || '/api'} />
+              </motion.div>
+            )}
+
+            {activeView === 'articles' && (
+              <motion.div key="articles_view" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="h-full flex flex-col overflow-hidden">
+                <ArticlesView onClose={() => navigateToRoute('dashboard')} />
+              </motion.div>
+            )}
+
+            {activeView === 'article' && articleSlug && (
+              <motion.div key="article_detail_view" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="h-full flex flex-col overflow-hidden">
+                <ArticleDetailView articleSlug={articleSlug} onClose={() => navigateToRoute('articles')} />
               </motion.div>
             )}
           </AnimatePresence>
@@ -495,17 +496,7 @@ export default function App() {
         {/* 3. PERSISTENT NAVIGATION BAR FOR CONTAINER */}
         <nav className="h-16 bg-[#8A1A1A] border-t-4 border-[#D97706] flex items-center justify-around text-[#FDF6E2] shrink-0 z-30 shadow-lg" id="bottom_navbar">
           <button 
-            onClick={() => navigateTo('astrology')}
-            className={`flex flex-col items-center justify-center flex-grow py-1.5 transition cursor-pointer hover:bg-black/10 ${activeView === 'astrology' ? 'text-amber-300 font-extrabold bg-black/15' : 'opacity-80'}`}
-            title="ஜோதிடம்"
-            id="nav_btn_astrology"
-          >
-            <Compass className="w-5 h-5" />
-            <span className="text-[10px] block mt-0.5">ஜோதிடம்</span>
-          </button>
-
-          <button 
-            onClick={() => navigateTo('dashboard')}
+            onClick={() => navigateToRoute('dashboard')}
             className={`flex flex-col items-center justify-center flex-grow py-1.5 transition cursor-pointer hover:bg-black/10 ${activeView === 'dashboard' ? 'text-amber-300 font-extrabold bg-black/15' : 'opacity-80'}`}
             title="முகப்பு"
             id="nav_btn_home"
@@ -515,13 +506,23 @@ export default function App() {
           </button>
 
           <button 
-            onClick={() => navigateTo('fasting')}
+            onClick={() => navigateToRoute('fasting')}
             className={`flex flex-col items-center justify-center flex-grow py-1.5 transition cursor-pointer hover:bg-black/10 ${activeView === 'fasting' ? 'text-amber-300 font-extrabold bg-black/15' : 'opacity-80'}`}
             title="விரதங்கள்"
             id="nav_btn_fasting"
           >
             <Bell className="w-5 h-5" />
             <span className="text-[10px] block mt-0.5">விரதங்கள்</span>
+          </button>
+
+          <button 
+            onClick={() => navigateToRoute('articles')}
+            className={`flex flex-col items-center justify-center flex-grow py-1.5 transition cursor-pointer hover:bg-black/10 ${activeView === 'articles' || activeView === 'article' ? 'text-amber-300 font-extrabold bg-black/15' : 'opacity-80'}`}
+            title="கட்டுரைகள்"
+            id="nav_btn_articles"
+          >
+            <BookOpen className="w-5 h-5" />
+            <span className="text-[10px] block mt-0.5">கட்டுரைகள்</span>
           </button>
         </nav>
 
@@ -532,7 +533,7 @@ export default function App() {
         {/* TOP STATUS BAR HEADER (Beautiful, elegant crimson and gold desktop header) */}
         <header className="flex items-center justify-between px-6 py-4 bg-[#8A1A1A] text-[#FDF6E2] shadow-md border-b-4 border-[#D97706] shrink-0" id="desktop_header">
           {/* Logo & Branding */}
-          <div className="flex items-center space-x-3 cursor-pointer" onClick={() => navigateTo('dashboard')} id="desktop_header_logo_box">
+          <div className="flex items-center space-x-3 cursor-pointer" onClick={() => navigateToRoute('dashboard')} id="desktop_header_logo_box">
             <span className="text-3xl leading-none animate-pulse">🕉</span>
             <div className="leading-tight flex flex-col">
               <span className="text-amber-300 font-black text-base tracking-wider font-display">தமிழ் பாரம்பரிய நாள்காட்டி 2026</span>
@@ -620,12 +621,13 @@ export default function App() {
                   { id: 'festivals', label: 'விடுமுறைகள்', desc: 'Festivals', icon: '🎉' },
                   { id: 'fasting', label: 'விரதங்கள்', desc: 'Fasting Days', icon: '🔔' },
                   { id: 'about', label: 'எங்களைப் பற்றி', desc: 'About Us', icon: 'ℹ️' },
+                  { id: 'articles', label: 'கட்டுரைகள்', desc: 'Articles', icon: '📚' },
                 ].map((tab) => {
                   const isTabActive = activeView === tab.id;
                   return (
                     <button
                       key={tab.id}
-                      onClick={() => navigateTo(tab.id as AppView)}
+                      onClick={() => navigateToRoute(tab.id as AppView)}
                       className={`px-4 py-2 rounded-2xl flex items-center space-x-2 border transition duration-150 cursor-pointer text-xs font-black ${
                         isTabActive
                           ? 'bg-[#8A1A1A] text-[#FDF6E2] border-[#8A1A1A] shadow-md scale-[1.03]'
@@ -646,12 +648,14 @@ export default function App() {
               <div className="bg-amber-100/50 border border-amber-200 rounded-xl px-3.5 py-1.5 text-[11px] font-bold text-amber-950 flex items-center space-x-2" id="desktop_date_badge">
                 <Clock className="w-3.5 h-3.5 text-amber-800" />
                 <span>
-                  {new Date(selectedDateStr).toLocaleDateString('ta-IN', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
+                  {(() => {
+                    const date = new Date(selectedDateStr + 'T00:00:00Z');
+                    const day = date.getUTCDate().toString().padStart(2, '0');
+                    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                    const month = monthNames[date.getUTCMonth()];
+                    const year = date.getUTCFullYear();
+                    return `${day}-${month}-${year}`;
+                  })()}
                 </span>
               </div>
             </div>
@@ -720,7 +724,7 @@ export default function App() {
                     {/* Quick navigation bento blocks */}
                     <div className="grid grid-cols-3 gap-4" id="desktop_nav_bento_blocks">
                       {/* Monthly Calendar Tab Card */}
-                      <div className="bg-white border border-amber-200 hover:border-amber-400 p-4 rounded-2xl shadow-sm hover:shadow-md cursor-pointer transition flex items-center space-x-3 group" onClick={() => navigateTo('monthly')} id="desktop_card_monthly">
+                      <div className="bg-white border border-amber-200 hover:border-amber-400 p-4 rounded-2xl shadow-sm hover:shadow-md cursor-pointer transition flex items-center space-x-3 group" onClick={() => navigateToRoute('monthly')} id="desktop_card_monthly">
                         <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center text-xl text-amber-800 font-black group-hover:scale-105 transition-transform">📅</div>
                         <div className="leading-tight">
                           <h4 className="text-xs font-black text-[#8A1A1A]">மாதகாட்டி காண்க</h4>
@@ -729,7 +733,7 @@ export default function App() {
                       </div>
 
                       {/* Festivals Tab Card */}
-                      <div className="bg-white border border-amber-200 hover:border-amber-400 p-4 rounded-2xl shadow-sm hover:shadow-md cursor-pointer transition flex items-center space-x-3 group" onClick={() => navigateTo('festivals')} id="desktop_card_festivals">
+                      <div className="bg-white border border-amber-200 hover:border-amber-400 p-4 rounded-2xl shadow-sm hover:shadow-md cursor-pointer transition flex items-center space-x-3 group" onClick={() => navigateToRoute('festivals')} id="desktop_card_festivals">
                         <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center text-xl text-amber-800 font-black group-hover:scale-105 transition-transform">🎉</div>
                         <div className="leading-tight">
                           <h4 className="text-xs font-black text-[#8A1A1A]">விடுமுறை தினங்கள்</h4>
@@ -738,7 +742,7 @@ export default function App() {
                       </div>
 
                       {/* Astrology Tab Card */}
-                      <div className="bg-white border border-amber-200 hover:border-amber-400 p-4 rounded-2xl shadow-sm hover:shadow-md cursor-pointer transition flex items-center space-x-3 group" onClick={() => navigateTo('astrology')} id="desktop_card_astrology">
+                      <div className="bg-white border border-amber-200 hover:border-amber-400 p-4 rounded-2xl shadow-sm hover:shadow-md cursor-pointer transition flex items-center space-x-3 group" onClick={() => navigateToRoute('astrology')} id="desktop_card_astrology">
                         <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center text-xl text-amber-800 font-black group-hover:scale-105 transition-transform">🪐</div>
                         <div className="leading-tight">
                           <h4 className="text-xs font-black text-[#8A1A1A]">ஜாதகம் & ஜோதிடம்</h4>
@@ -751,7 +755,7 @@ export default function App() {
                     <div id="desktop_consultation_banner_row">
                       <button
                         onClick={() => {
-                          navigateTo('astrology', '2026-07-13');
+                          navigateToRoute('astrology', '2026-07-13');
                           triggerToast('ஜாதகம் கணிக்கும் பக்கத்திற்கு செல்கிறது...');
                         }}
                         className="w-full bg-[#8A1A1A] text-[#FDF6E2] border-2 border-amber-400 rounded-2xl shadow-md p-4 flex items-center justify-between hover:bg-[#9C2020] hover:scale-[1.01] active:scale-95 transition relative overflow-hidden group cursor-pointer"
@@ -878,44 +882,49 @@ export default function App() {
 
                 {activeView === 'monthly' && (
                   <motion.div key="desktop_monthly" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full">
-                    <MonthlyCalendarView onSelectDay={handleSelectDay} onClose={() => navigateTo('dashboard')} />
+                    <MonthlyCalendarView onSelectDay={handleSelectDay} onClose={() => navigateToRoute('dashboard')} />
                   </motion.div>
                 )}
 
                 {activeView === 'astrology' && (
                   <motion.div key="desktop_astrology" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full">
-                    <AstrologyView selectedDateStr={selectedDateStr} onClose={() => navigateTo('dashboard')} />
+                    <AstrologyView selectedDateStr={selectedDateStr} onClose={() => navigateToRoute('dashboard')} />
                   </motion.div>
                 )}
 
                 {activeView === 'festivals' && (
                   <motion.div key="desktop_festivals" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full">
-                    <FestivalsView onSelectDay={handleSelectDay} onClose={() => navigateTo('dashboard')} />
+                    <FestivalsView onSelectDay={handleSelectDay} onClose={() => navigateToRoute('dashboard')} />
                   </motion.div>
                 )}
 
                 {activeView === 'fasting' && (
                   <motion.div key="desktop_fasting" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full">
-                    <FastingDaysView onSelectDay={handleSelectDay} onClose={() => navigateTo('dashboard')} />
+                    <FastingDaysView onSelectDay={handleSelectDay} onClose={() => navigateToRoute('dashboard')} />
                   </motion.div>
                 )}
 
                 {activeView === 'about' && (
                   <motion.div key="desktop_about" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full">
-                    <AboutUsView onClose={() => navigateTo('dashboard')} />
+                    <AboutUsView onClose={() => navigateToRoute('dashboard')} />
                   </motion.div>
                 )}
 
-                {activeView === 'admin' && (
+                {activeView === 'articles' && (
+                  <motion.div key="desktop_articles" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full">
+                    <ArticlesView onClose={() => navigateToRoute('dashboard')} />
+                  </motion.div>
+                )}
+
+                {activeView === 'article' && articleSlug && (
+                  <motion.div key="desktop_article_detail" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full">
+                    <ArticleDetailView articleSlug={articleSlug} onClose={() => navigateToRoute('articles')} />
+                  </motion.div>
+                )}
+
+            {(activeView as any) === 'admin' && (
                   <motion.div key="desktop_admin" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full">
-                    <React.Suspense fallback={
-                      <div className="h-full flex flex-col items-center justify-center bg-[#FFFDF0] text-[#8A1A1A]">
-                        <div className="w-8 h-8 border-4 border-amber-600 border-t-transparent rounded-full animate-spin mb-2"></div>
-                        <span className="text-xs font-bold font-mono">Loading Admin Module...</span>
-                      </div>
-                    }>
-                      <AdminView onClose={() => navigateTo('dashboard')} />
-                    </React.Suspense>
+                    <AdminView onClose={() => navigateToRoute('dashboard')} apiBase={(import.meta as any)?.env?.VITE_API_BASE_URL || '/api'} />
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -962,7 +971,7 @@ export default function App() {
                 <p>• தொழில்நுட்பம்: React 19, Tailwind CSS v4, Motion</p>
                 <p>• தளம்: AI Studio Sandbox Space</p>
                 <button
-                  onClick={() => { setIsAboutOpen(false); navigateTo('admin'); }}
+                  onClick={() => { setIsAboutOpen(false); navigateToRoute('admin'); }}
                   className="mt-2 w-full bg-amber-600 hover:bg-amber-700 text-white py-1 rounded-lg text-[10px] font-bold transition flex items-center justify-center space-x-1 cursor-pointer"
                 >
                   <span>நிர்வாகி பகுதி (Admin Login)</span>

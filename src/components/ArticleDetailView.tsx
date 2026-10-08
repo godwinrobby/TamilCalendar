@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, BookOpen, Calendar, ChevronLeft } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 import { motion } from 'motion/react';
-import { AppView, navigateToRoute } from '../router';
+import { navigateToRoute } from '../router';
 import { resolveArticleImageUrl } from './ArticlesView';
 
 interface Category {
@@ -64,10 +64,6 @@ export default function ArticleDetailView({ articleSlug, onClose }: { articleSlu
         animate={{ opacity: 1 }}
         className="h-full flex flex-col bg-[#FFFDF0]"
       >
-        <div className="bg-[#8A1A1A] text-[#FDF6E2] px-4 py-3 flex items-center space-x-2.5 shrink-0">
-          <div className="w-8 h-8 bg-white/10 rounded-full animate-pulse" />
-          <div className="h-4 bg-white/10 rounded w-32 animate-pulse" />
-        </div>
         <div className="flex-grow flex items-center justify-center">
           <div className="text-sm text-amber-800 font-bold">கட்டுரை ஏற்றப்படுகிறது...</div>
         </div>
@@ -82,15 +78,6 @@ export default function ArticleDetailView({ articleSlug, onClose }: { articleSlu
         animate={{ opacity: 1 }}
         className="h-full flex flex-col bg-[#FFFDF0]"
       >
-        <div className="bg-[#8A1A1A] text-[#FDF6E2] px-4 py-3 flex items-center space-x-2.5 shrink-0">
-          <button
-            onClick={() => navigateToRoute('articles')}
-            className="flex items-center justify-center w-8 h-8 bg-[#FFFDF0] text-[#8A1A1A] rounded-full hover:bg-amber-50 transition shadow-md border border-amber-200/50 active:scale-95 cursor-pointer"
-          >
-            <X className="w-4 h-4" />
-          </button>
-          <h2 className="text-sm font-black">கட்டுரை காணப்படவில்லை</h2>
-        </div>
         <div className="flex-grow flex flex-col items-center justify-center space-y-3 p-6 text-center">
           <div className="text-sm text-amber-800 font-bold">
             {error === 'load-failed'
@@ -123,32 +110,9 @@ export default function ArticleDetailView({ articleSlug, onClose }: { articleSlu
       exit={{ opacity: 0, y: -10 }}
       className="h-full flex flex-col bg-[#FFFDF0]"
     >
-      {/* Header */}
-      <div className="bg-[#8A1A1A] text-[#FDF6E2] px-4 py-3 flex items-center justify-between shrink-0">
-        <div className="flex items-center space-x-2.5">
-          <button
-            onClick={() => navigateToRoute('articles')}
-            className="flex items-center justify-center w-8 h-8 bg-[#FFFDF0] text-[#8A1A1A] rounded-full hover:bg-amber-50 transition shadow-md border border-amber-200/50 active:scale-95 cursor-pointer"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <div className="flex items-center space-x-2">
-            <BookOpen className="w-5 h-5 text-amber-300" />
-            <div>
-              <h2 className="text-sm font-black tracking-wide">கட்டுரைகள்</h2>
-              <p className="text-[10px] opacity-80">Articles & Stories</p>
-            </div>
-          </div>
-        </div>
-        <button
-          onClick={onClose}
-          className="flex items-center justify-center w-8 h-8 bg-white/10 rounded-full hover:bg-white/20 transition border border-amber-400/50 active:scale-95 cursor-pointer"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-
-      {/* Article Content */}
+      {/* Article Content (app shell in App.tsx already renders the red
+          header with back button, so no inner header here — avoids the
+          double-header shown in the screenshot) */}
       <div className="flex-grow overflow-y-auto p-4 scrollbar-none">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
