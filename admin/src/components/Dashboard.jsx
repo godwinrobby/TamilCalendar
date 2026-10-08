@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { resolveArticleImageUrl } from './Articles'
 
 function Dashboard({ apiUrl, token }) {
   const navigate = useNavigate()
@@ -124,6 +125,7 @@ function Dashboard({ apiUrl, token }) {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">படம் (Image)</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">தலைப்பு (Title)</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">பிரிவு (Category)</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">நிலை (Status)</th>
@@ -133,6 +135,19 @@ function Dashboard({ apiUrl, token }) {
               <tbody className="bg-white divide-y divide-gray-200">
                 {recentArticles.map((article) => (
                   <tr key={article.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => navigate('/articles')}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {resolveArticleImageUrl(article, apiUrl) ? (
+                        <img
+                          src={resolveArticleImageUrl(article, apiUrl)}
+                          alt={article.title}
+                          className="w-12 h-12 object-cover rounded-lg border border-gray-200"
+                          loading="lazy"
+                          onError={(e) => { e.target.style.display = 'none' }}
+                        />
+                      ) : (
+                        <span className="text-gray-300 text-xs">—</span>
+                      )}
+                    </td>
                     <td className="px-6 py-4 text-sm font-medium text-gray-900 max-w-xs truncate" title={article.title}>
                       {article.title}
                     </td>

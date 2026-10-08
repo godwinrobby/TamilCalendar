@@ -1,6 +1,23 @@
 import { useState, useEffect } from 'react'
 
+export function resolveArticleImageUrl(article, apiUrl = '') {
+  if (!article) return null
+  // Backend now appends featured_image_url — prefer it
+  if (article.featured_image_url) return article.featured_image_url
+  const raw = (article.featured_image || '').trim()
+  if (!raw) return null
+  if (/^https?:\/\//i.test(raw) || raw.startsWith('data:')) return raw
+  const base = (apiUrl || '').replace(/\/api\/?$/, '')
+  let path = raw.replace(/^\//, '').replace(/^(public\/)?storage\//, '')
+  // Bare filenames (legacy seed data) live under uploads/
+  if (!path.includes('/')) path = `uploads/${path}`
+  // Production API serves Laravel from a /public sub-path
+  if (/veltamilcalendar\.com/i.test(base)) return `${base}/public/storage/${path}`
+  return base ? `${base}/storage/${path}` : `/storage/${path}`
+}
+
 function Articles({ apiUrl, token }) {
+
   const [articles, setArticles] = useState([])
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
@@ -169,7 +186,9 @@ function Articles({ apiUrl, token }) {
       }
 
       const data = await res.json()
-      setFormData({ ...formData, featured_image: data.url })
+      // Backend returns { url, path, filename } — store the relative path
+      // so featured_image_url resolves correctly on any host
+      setFormData({ ...formData, featured_image: data.path || data.url })
     } catch (err) {
       setError(err.message)
     } finally {
@@ -279,11 +298,12 @@ function Articles({ apiUrl, token }) {
             {formData.featured_image && (
               <div className="mt-2">
                 <img
-                  src={formData.featured_image}
+                  src={resolveArticleImageUrl({ featured_image: formData.featured_image }, apiUrl)}
                   alt="Preview"
                   className="w-32 h-32 object-cover rounded-lg border border-gray-200"
+                  onError={(e) => { e.target.style.display = 'none' }}
                 />
-                <p className="mt-1 text-xs text-gray-500 break-all">{formData.featured_image}</p>
+                <p className="mt-1 text-xs text-gray-500 break-all">{resolveArticleImageUrl({ featured_image: formData.featured_image }, apiUrl)}</p>
               </div>
             )}
           </div>
@@ -323,6 +343,7 @@ function Articles({ apiUrl, token }) {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Image</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
@@ -332,6 +353,19 @@ function Articles({ apiUrl, token }) {
           <tbody className="bg-white divide-y divide-gray-200">
             {articles.map((article) => (
               <tr key={article.id}>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {resolveArticleImageUrl(article, apiUrl) ? (
+                    <img
+                      src={resolveArticleImageUrl(article, apiUrl)}
+                      alt={article.title}
+                      className="w-14 h-14 object-cover rounded-lg border border-gray-200"
+                      loading="lazy"
+                      onError={(e) => { e.target.style.display = 'none' }}
+                    />
+                  ) : (
+                    <span className="text-gray-300 text-xs">No image</span>
+                  )}
+                </td>
                 <td className="px-6 py-4 text-sm font-medium text-gray-900">
                   {article.title}
                 </td>
