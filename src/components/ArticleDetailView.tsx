@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, BookOpen, Calendar, ChevronLeft } from 'lucide-react';
 import { motion } from 'motion/react';
 import { AppView, navigateToRoute } from '../router';
+import { resolveArticleImageUrl } from './ArticlesView';
 
 interface Category {
   id: number;
@@ -17,6 +18,7 @@ interface Article {
   content: string;
   excerpt: string;
   featured_image: string | null;
+  featured_image_url?: string | null;
   category_id: number;
   status: string;
   published_at: string;
@@ -172,10 +174,10 @@ export default function ArticleDetailView({ articleSlug, onClose }: { articleSlu
           </h1>
 
           {/* Featured image */}
-          {article.featured_image && (
+          {article && resolveArticleImageUrl(article) && (
             <div className="w-full rounded-2xl overflow-hidden bg-amber-100/30 border border-amber-200/50 mb-4">
               <img
-                src={article.featured_image}
+                src={resolveArticleImageUrl(article)!}
                 alt={article.title}
                 className="w-full max-h-72 object-cover"
                 loading="lazy"
