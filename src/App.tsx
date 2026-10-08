@@ -496,7 +496,7 @@ export default function App() {
             <span className="text-[10px] block mt-0.5">முகப்பு</span>
           </button>
 
-          <button 
+          <button
             onClick={() => navigateToRoute('fasting')}
             className={`flex flex-col items-center justify-center flex-grow py-1.5 transition cursor-pointer hover:bg-black/10 ${activeView === 'fasting' ? 'text-amber-300 font-extrabold bg-black/15' : 'opacity-80'}`}
             title="விரதங்கள்"
@@ -504,16 +504,6 @@ export default function App() {
           >
             <Bell className="w-5 h-5" />
             <span className="text-[10px] block mt-0.5">விரதங்கள்</span>
-          </button>
-
-          <button 
-            onClick={() => navigateToRoute('articles')}
-            className={`flex flex-col items-center justify-center flex-grow py-1.5 transition cursor-pointer hover:bg-black/10 ${activeView === 'articles' || activeView === 'article' ? 'text-amber-300 font-extrabold bg-black/15' : 'opacity-80'}`}
-            title="கட்டுரைகள்"
-            id="nav_btn_articles"
-          >
-            <BookOpen className="w-5 h-5" />
-            <span className="text-[10px] block mt-0.5">கட்டுரைகள்</span>
           </button>
         </nav>
 
